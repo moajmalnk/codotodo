@@ -40,9 +40,10 @@ import VideocamIcon from '@mui/icons-material/Videocam';
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import axios from 'axios';
 import weekOfYear from 'dayjs/plugin/weekOfYear';
@@ -63,7 +64,6 @@ import ScheduleIcon from '@mui/icons-material/Schedule';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { AddCircleOutline } from '@mui/icons-material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ClearIcon from '@mui/icons-material/Clear';
 import { Fade } from '@mui/material';
@@ -242,9 +242,18 @@ const Meets = () => {
 
   const fetchMeets = async () => {
     try {
+      setLoading(true);
       const response = await axios.get(`${API_URL}/meets.php`);
+      
       if (response.data) {
-        setMeets(Array.isArray(response.data) ? response.data : []);
+        const formattedMeets = Array.isArray(response.data) ? response.data.map(meet => ({
+          ...meet,
+          meeting_time: dayjs(meet.meeting_time).format('YYYY-MM-DD HH:mm:ss'),
+          status: meet.status === 1 || meet.status === '1' || meet.status === true
+        })) : [];
+        
+        setMeets(formattedMeets);
+        localStorage.setItem('meets', JSON.stringify(formattedMeets));
       }
     } catch (error) {
       console.error('Error details:', error);
@@ -280,28 +289,31 @@ const Meets = () => {
       const meetData = {
         meeting_title: meetingTitle,
         meeting_time: dayjs(meetingTime).format('YYYY-MM-DD HH:mm:ss'),
-        meet_link: meetLink,
+        meet_link: meetLink || defaultMeetLink,
         agenda: agenda || '',
         attendees: attendees || '',
-        status: isCompleted
+        status: isCompleted ? 1 : 0  // Convert boolean to integer
       };
 
-      const response = await fetch(`${API_URL}/meets.php`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(meetData)
-      });
+      const response = await axios.post(`${API_URL}/meets.php`, meetData);
 
-      if (response.ok) {
+      if (response.data && response.data.status === 'success') {
         await fetchMeets();
         handleCloseDialog();
         showSnackbar('Meeting added successfully', 'success');
+        
+        // Create notification for the new meeting
+        await createNotification(
+          'New Meeting Created',
+          `Meeting "${meetingTitle}" has been scheduled for ${dayjs(meetingTime).format('MMM D, YYYY h:mm A')}`,
+          'medium'
+        );
+      } else {
+        throw new Error(response.data?.message || 'Failed to add meeting');
       }
     } catch (error) {
       console.error('Error:', error);
-      showSnackbar('Failed to add meeting', 'error');
+      showSnackbar(error.message || 'Failed to add meeting', 'error');
     }
   };
 
@@ -316,32 +328,31 @@ const Meets = () => {
         id: meetId,
         meeting_title: meetingTitle,
         meeting_time: dayjs(meetingTime).format('YYYY-MM-DD HH:mm:ss'),
-        meet_link: meetLink,
+        meet_link: meetLink || defaultMeetLink,
         agenda: agenda || '',
         attendees: attendees || '',
-        status: isCompleted
+        status: isCompleted ? 1 : 0
       };
 
-      const response = await fetch(`${API_URL}/meets.php`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(meetData)
-      });
+      const response = await axios.put(`${API_URL}/meets.php`, meetData);
 
-      const data = await response.json(); // Get the response data
-
-      if (response.ok) {
-        await fetchMeets(); // Refresh the list of meetings
-        handleCloseDialog(); // Close the dialog
+      if (response.data && response.data.status === 'success') {
+        await fetchMeets();
+        handleCloseDialog();
         showSnackbar('Meeting updated successfully', 'success');
+        
+        // Create notification for the updated meeting
+        await createNotification(
+          'Meeting Updated',
+          `Meeting "${meetingTitle}" has been updated`,
+          'medium'
+        );
       } else {
-        throw new Error(data.message || 'Failed to update meeting');
+        throw new Error(response.data?.message || 'Failed to update meeting');
       }
     } catch (error) {
       console.error('Error updating meeting:', error);
-      showSnackbar('Failed to update meeting', 'error');
+      showSnackbar(error.message || 'Failed to update meeting', 'error');
     }
   };
 
@@ -467,26 +478,23 @@ const Meets = () => {
 
   const getFilteredMeets = () => {
     return meets.filter(meet => {
-      const matchesSearch =
-        meet.meeting_title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        meet.agenda?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        meet.attendees?.toLowerCase().includes(searchTerm.toLowerCase());
-
-      const matchesPriority = priority === 'all' || meet.priority === priority;
-
-      const matchesStatus = status === 'all' ||
-        (status === 'completed' && meet.status) ||
-        (status === 'pending' && !meet.status);
-
       const meetDate = dayjs(meet.meeting_time);
       const now = dayjs();
+      const searchFields = [
+        meet.meeting_title,
+        meet.agenda,
+        meet.attendees
+      ].filter(Boolean).join(' ').toLowerCase();
+
+      const matchesSearch = !searchTerm || 
+        searchFields.includes(searchTerm.toLowerCase());
 
       const matchesDueDate = dueDate === 'all' ||
         (dueDate === 'today' && meetDate.isSame(now, 'day')) ||
         (dueDate === 'week' && meetDate.isAfter(now) && meetDate.isBefore(now.add(7, 'day'))) ||
         (dueDate === 'overdue' && meetDate.isBefore(now));
 
-      return matchesSearch && matchesPriority && matchesStatus && matchesDueDate;
+      return matchesSearch && matchesDueDate;
     });
   };
 
