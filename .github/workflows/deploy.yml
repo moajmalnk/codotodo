@@ -21,7 +21,6 @@ jobs:
         run: npm run build
         env:
           CI: false
-          PUBLIC_URL: /todo
           
       - name: Deploy to Hostinger
         uses: SamKirkland/FTP-Deploy-Action@4.0.0
@@ -29,5 +28,5 @@ jobs:
           server: 157.173.216.110
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./build/
-          server-dir: /public_html/todo/
+          local-dir: build/
+          server-dir: public_html/todo/
