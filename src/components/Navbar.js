@@ -149,7 +149,8 @@ const StyledTabs = styled(Tabs)(({ theme }) => ({
   '& .MuiTabs-flexContainer': {
     gap: theme.spacing(0.5),
     display: 'flex',
-    alignItems: 'center'
+    alignItems: 'center',
+    marginTop: '2px !important',
   },
   '& .MuiTabs-indicator': {
     display: 'none',

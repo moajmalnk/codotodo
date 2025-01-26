@@ -2121,7 +2121,7 @@ ${status}
                 flexDirection: 'column',
                 alignItems: 'center',
                 gap: 2,
-                bgcolor: 'background.default'
+                bgcolor: 'background.default',
               }}
             >
               <Typography variant="h6" color="text.secondary">
@@ -2149,7 +2149,7 @@ ${status}
           </Fade>
         ) : (
           <Fade in={true}>
-            <Grid container spacing={2.5} sx={{ mt: 2 }}>
+            <Grid container spacing={3}>
               {filteredMeets.map((meet) => (
                 <Grid item xs={12} sm={6} md={4} lg={3} key={meet.id}>
                   {renderMeetCard(meet)}
@@ -2173,7 +2173,7 @@ ${status}
         >
           {renderDialogTitle()}
           <FormContainer>
-            <Grid container spacing={3}>
+            <Grid container spacing={3} sx={{ mt: 2 }}>
               {/* Meeting Title */}
               <Grid item xs={12}>
                 <StyledTextField

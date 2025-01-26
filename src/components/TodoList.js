@@ -1081,7 +1081,7 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
           Add New Todo
         </DialogTitle>
 
-        <DialogContent sx={{ mt: 2, px: 3, py: 2 }}>
+        <DialogContent sx={{ mt: 2, px: 3, py: 2, pt: '12px'}}>
           <TextField
             fullWidth
             required
