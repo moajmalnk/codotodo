@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CODO ToDo - Offline</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --bg: #f3f4f6;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background: var(--bg);
+            color: #1f2937;
+            overflow: hidden;
+        }
+
+        .background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: -1;
+            background: 
+                radial-gradient(circle at 10% 20%, rgba(37, 99, 235, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(37, 99, 235, 0.1) 0%, transparent 20%);
+            animation: backgroundPulse 10s ease-in-out infinite alternate;
+        }
+
+        .offline-container {
+            text-align: center;
+            padding: 3rem;
+            background: white;
+            border-radius: 1.5rem;
+            box-shadow: 
+                0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                0 20px 25px -5px rgba(0, 0, 0, 0.05);
+            max-width: 90%;
+            width: 450px;
+            position: relative;
+            overflow: hidden;
+            animation: containerFloat 1s ease-out forwards;
+        }
+
+        .offline-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), #60a5fa);
+        }
+
+        .icon-container {
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .icon {
+            font-size: 5rem;
+            animation: iconFloat 3s ease-in-out infinite;
+            position: relative;
+            z-index: 2;
+        }
+
+        .icon-bg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100px;
+            height: 100px;
+            background: rgba(37, 99, 235, 0.1);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        h1 {
+            margin: 0 0 1rem;
+            color: var(--primary);
+            font-size: 2.5rem;
+            animation: slideUp 0.5s ease-out 0.2s both;
+        }
+
+        p {
+            margin: 0 0 2rem;
+            color: #4b5563;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            animation: slideUp 0.5s ease-out 0.4s both;
+        }
+
+        .retry-button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            animation: slideUp 0.5s ease-out 0.6s both;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .retry-button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        }
+
+        .retry-button:active {
+            transform: translateY(0);
+        }
+
+        .retry-button::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.5s, height 0.5s, opacity 0.5s;
+        }
+
+        .retry-button:hover::after {
+            width: 200px;
+            height: 200px;
+            opacity: 0.4;
+        }
+
+        @keyframes containerFloat {
+            from { 
+                transform: translateY(40px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        @keyframes pulse {
+            0% { 
+                transform: translate(-50%, -50%) scale(0.8);
+                opacity: 0.5;
+            }
+            50% { 
+                transform: translate(-50%, -50%) scale(1.2);
+                opacity: 0.3;
+            }
+            100% { 
+                transform: translate(-50%, -50%) scale(0.8);
+                opacity: 0.5;
+            }
+        }
+
+        @keyframes backgroundPulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1); }
+        }
+
+        /* Add responsive design */
+        @media (max-width: 480px) {
+            .offline-container {
+                padding: 2rem;
+                margin: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .icon {
+                font-size: 4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background"></div>
+    <div class="offline-container">
+        <div class="icon-container">
+            <div class="icon-bg"></div>
+            <div class="icon">📡</div>
+        </div>
+        <h1>You're Offline</h1>
+        <p>Don't worry! Your data is safe. Please check your internet connection and try again.</p>
+        <button class="retry-button" onclick="window.location.reload()">
+            Reconnect
+        </button>
+    </div>
+</body>
+</html> 

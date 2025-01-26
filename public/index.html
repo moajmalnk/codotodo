@@ -87,6 +87,116 @@
         }
       }
     </script>
+
+    <!-- Enhanced Offline Support Styles -->
+    <style>
+      .offline-message {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+        color: white;
+        padding: 16px 24px;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.16);
+        z-index: 9999;
+        display: none;
+        font-family: system-ui, -apple-system, sans-serif;
+        animation: slideIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transform-origin: bottom right;
+      }
+
+      .offline-message.online {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        animation: slideIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55),
+                   fadeOut 0.5s ease-out 2s forwards;
+      }
+
+      .offline-icon {
+        display: inline-block;
+        margin-right: 8px;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes slideIn {
+        from { 
+          transform: translateY(100px) scale(0.8);
+          opacity: 0;
+        }
+        to { 
+          transform: translateY(0) scale(1);
+          opacity: 1;
+        }
+      }
+
+      @keyframes fadeOut {
+        to {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+      }
+
+      @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+        100% { transform: scale(1); }
+      }
+
+      .connection-status {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: #dc2626;
+        transform-origin: left;
+        transition: transform 0.3s ease;
+        z-index: 10000;
+      }
+
+      .connection-status.online {
+        background: #059669;
+        animation: progressBar 0.3s ease-out forwards;
+      }
+
+      @keyframes progressBar {
+        from { transform: scaleX(0); }
+        to { transform: scaleX(1); }
+      }
+    </style>
+
+    <!-- Enhanced Offline Detection Script -->
+    <script>
+      window.addEventListener('load', function() {
+        const message = document.getElementById('offline-message');
+        const status = document.getElementById('connection-status');
+        let onlineMessageTimeout;
+
+        function updateOnlineStatus(event) {
+          const isOnline = navigator.onLine;
+          status.classList.toggle('online', isOnline);
+          
+          if (!isOnline) {
+            message.classList.remove('online');
+            message.style.display = 'block';
+            clearTimeout(onlineMessageTimeout);
+          } else {
+            message.textContent = '🎉 You\'re back online!';
+            message.classList.add('online');
+            message.style.display = 'block';
+            
+            onlineMessageTimeout = setTimeout(() => {
+              message.style.display = 'none';
+            }, 2500);
+          }
+        }
+
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+      });
+    </script>
   </head>
   <body>
     <noscript>
@@ -96,7 +206,32 @@
         <p>Need help? Visit our <a href="https://support.codotodo.com/enable-javascript">support page</a>.</p>
       </div>
     </noscript>
+    
+    <!-- Connection Status Bar -->
+    <div id="connection-status" class="connection-status"></div>
+
+    <!-- Enhanced Offline Message -->
+    <div id="offline-message" class="offline-message">
+      <span class="offline-icon">📡</span>
+      You're currently offline. Some features may be limited.
+    </div>
+
     <div id="root"></div>
+    
+    <!-- Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('%PUBLIC_URL%/service-worker.js')
+            .then(function(registration) {
+              console.log('ServiceWorker registration successful');
+            })
+            .catch(function(err) {
+              console.log('ServiceWorker registration failed: ', err);
+            });
+        });
+      }
+    </script>
     <!--
       This HTML file is a template.
       If you open it directly in the browser, you will see an empty page.
