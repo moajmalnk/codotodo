@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, createBrowserRouter } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
 import Navbar from './components/Navbar';
@@ -83,6 +83,28 @@ const theme = createTheme({
 });
 
 function App() {
+  const routes = [
+    {
+      path: "/",
+      element: <TodoList />,
+    },
+    {
+      path: "/todos",
+      element: <TodoList />,
+    },
+    {
+      path: "/meets",
+      element: <Meets />,
+    },
+  ];
+
+  const router = createBrowserRouter(routes, {
+    future: {
+      v7_startTransition: true,
+      v7_relativeSplatPath: true
+    }
+  });
+
   return (
     <GlobalProvider>
       <ThemeProvider theme={theme}>

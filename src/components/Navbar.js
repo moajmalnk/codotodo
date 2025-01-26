@@ -366,8 +366,16 @@ const Navbar = ({ todos, onFilterChange }) => {
   };
 
   const handleSearchChange = (event) => {
-    setSearchTerm(event.target.value);
-    // Add your search logic here
+    const searchValue = event.target.value;
+    setSearchTerm(searchValue);
+
+    // Emit search event with the new search term
+    window.dispatchEvent(new CustomEvent('searchQueryChange', {
+      detail: { 
+        searchQuery: searchValue,
+        path: location.pathname // Include current path to handle different searches
+      }
+    }));
   };
 
   const handlePriorityChange = (value) => {
@@ -402,6 +410,10 @@ const Navbar = ({ todos, onFilterChange }) => {
     setPriority('all');
     setStatus('all');
     setDueDate('all');
+    setDateRange([null, null]);
+    setShowCustomDate(false);
+    setStartDate('');
+    setEndDate('');
     
     window.dispatchEvent(new CustomEvent('clearAllFilters'));
     
@@ -421,8 +433,10 @@ const Navbar = ({ todos, onFilterChange }) => {
   };
 
   const formatDateRange = (range) => {
-    if (!range[0] || !range[1]) return '';
-    return `${format(range[0], 'MMM d')} - ${format(range[1], 'MMM d, yyyy')}`;
+    if (!range[0] || !range[1]) return "Custom Range";
+    const start = new Date(range[0]).toLocaleDateString();
+    const end = new Date(range[1]).toLocaleDateString();
+    return `${start} - ${end}`;
   };
 
   const handleDateRangeChange = (newRange) => {
@@ -438,23 +452,54 @@ const Navbar = ({ todos, onFilterChange }) => {
   };
 
   const handleDateChange = (type, event) => {
-    const date = event.target.value;
+    const value = event.target.value;
     if (type === 'start') {
-      setStartDate(date);
+      setStartDate(value);
+      // If end date is before start date, update end date
+      if (endDate && value > endDate) {
+        setEndDate(value);
+      }
     } else {
-      setEndDate(date);
+      setEndDate(value);
+      // If start date is after end date, update start date
+      if (startDate && value < startDate) {
+        setStartDate(value);
+      }
     }
   };
 
   const handleApplyDateRange = () => {
-    if (startDate && endDate) {
-      const filtered = todos?.filter(todo => {
-        if (!todo.dueDate) return false;
-        const todoDate = new Date(todo.dueDate);
-        return todoDate >= new Date(startDate) && todoDate <= new Date(endDate);
-      });
-      onFilterChange && onFilterChange(filtered);
+    if (!startDate || !endDate) return;
+
+    // Create and dispatch the filter event
+    const event = new CustomEvent('filterChange', {
+      detail: {
+        type: 'dateRange',
+        value: {
+          startDate,
+          endDate
+        }
+      }
+    });
+    window.dispatchEvent(event);
+
+    // Update the dateRange state
+    setDateRange([startDate, endDate]);
+    
+    // Close the custom date picker
+    setShowCustomDate(false);
+  };
+
+  // Add this function to handle search in the Meets component
+  const handleSearch = (searchQuery) => {
+    if (!searchQuery) {
+      return todos; // Return all todos if no search query
     }
+
+    return todos.filter(todo => 
+      todo.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      todo.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
   };
 
   return (
@@ -472,7 +517,7 @@ const Navbar = ({ todos, onFilterChange }) => {
               display: { xs: 'none', sm: 'block' },
               mr: 4,
               fontWeight: 600,
-              background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+              background: 'linear-gradient(45deg,rgb(33, 243, 138) 30%, #21CBF3 90%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               fontSize: { xs: '1.1rem', sm: '1.25rem' }

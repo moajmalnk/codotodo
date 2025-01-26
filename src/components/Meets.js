@@ -31,7 +31,11 @@ import {
   Select,
   Menu,
   MenuItem,
-  Skeleton
+  Skeleton,
+  Link,
+  Stack,
+  AvatarGroup,
+  useMediaQuery
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -70,7 +74,32 @@ import { Fade } from '@mui/material';
 import { GlobalContext } from '../context/GlobalContext';
 import ShareIcon from '@mui/icons-material/Share';
 import { API_URL } from '../config/constants';
-
+import { alpha } from '@mui/material/styles';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import AssignmentIcon from '@mui/icons-material/Assignment';
+import PendingIcon from '@mui/icons-material/Pending';
+import { useTheme } from '@mui/material/styles';
+import {
+  Timeline as MUITimeline,
+  TimelineItem as MUITimelineItem,
+  TimelineSeparator as MUITimelineSeparator,
+  TimelineConnector as MUITimelineConnector,
+  TimelineContent as MUITimelineContent,
+  TimelineDot as MUITimelineDot,
+  TimelineOppositeContent as MUITimelineOppositeContent
+} from '@mui/lab';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import HistoryIcon from '@mui/icons-material/History';
+import Timeline from '@mui/lab/Timeline';
+import TimelineItem from '@mui/lab/TimelineItem';
+import TimelineSeparator from '@mui/lab/TimelineSeparator';
+import TimelineConnector from '@mui/lab/TimelineConnector';
+import TimelineContent from '@mui/lab/TimelineContent';
+import TimelineDot from '@mui/lab/TimelineDot';
+import TimelineOppositeContent from '@mui/lab/TimelineOppositeContent';
+import LinkIcon from '@mui/icons-material/Link';
+import { useLocation } from 'react-router-dom';
 
 // Initialize dayjs plugins
 dayjs.extend(weekOfYear);
@@ -153,6 +182,349 @@ const SearchTextField = styled(TextField)(({ theme }) => ({
   }
 }));
 
+// Add these enhanced styled components
+const MeetCard = styled(Paper)(({ theme }) => ({
+  height: '100%',
+  padding: theme.spacing(2.5),
+  cursor: 'pointer',
+  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  position: 'relative',
+  borderRadius: '16px',
+  backgroundColor: theme.palette.background.paper,
+  '&:hover': {
+    transform: 'translateY(-4px)',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
+  }
+}));
+
+const PriorityBadge = styled(Chip)(({ theme }) => ({
+  position: 'absolute',
+  top: '12px',
+  right: '12px',
+  height: '24px',
+  padding: '0 8px',
+  borderRadius: '12px',
+  backgroundColor: alpha(theme.palette.error.main, 0.1),
+  color: theme.palette.error.main,
+  fontWeight: 600,
+  fontSize: '0.75rem',
+  textTransform: 'uppercase'
+}));
+
+// Add LoadingSkeleton component
+const LoadingSkeleton = () => (
+  <Grid container spacing={2}>
+    {[1, 2, 3].map((item) => (
+      <Grid item xs={12} sm={6} md={4} key={item}>
+        <Paper sx={{ p: 2, height: '100%' }}>
+          <Skeleton variant="rectangular" height={24} sx={{ mb: 2 }} />
+          <Skeleton variant="text" sx={{ mb: 1 }} />
+          <Skeleton variant="text" sx={{ mb: 2 }} />
+          <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+            <Skeleton variant="rectangular" width={100} height={24} />
+            <Skeleton variant="rectangular" width={80} height={24} />
+          </Box>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Skeleton variant="circular" width={32} height={32} />
+              <Skeleton variant="circular" width={32} height={32} />
+              <Skeleton variant="circular" width={32} height={32} />
+            </Box>
+            <Skeleton variant="rectangular" width={100} height={32} />
+          </Box>
+        </Paper>
+      </Grid>
+    ))}
+  </Grid>
+);
+
+// Add new styled components
+const DetailDialog = styled(Dialog)(({ theme }) => ({
+  '& .MuiDialog-paper': {
+    borderRadius: '16px',
+    maxWidth: '800px',
+    width: '100%',
+    margin: theme.spacing(2),
+    background: theme.palette.background.paper,
+    boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+    overflow: 'hidden',
+    [theme.breakpoints.down('sm')]: {
+      margin: theme.spacing(1),
+      maxHeight: '95vh'
+    }
+  }
+}));
+
+const DetailHeader = styled(Box)(({ theme }) => ({
+  background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+  color: theme.palette.primary.contrastText,
+  padding: theme.spacing(3, 4),
+  position: 'relative',
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(2),
+  },
+  '&::after': {
+    content: '""',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '4px',
+    background: 'rgba(255,255,255,0.1)'
+  }
+}));
+
+const DetailContent = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(4),
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(2)
+  },
+  overflowY: 'auto',
+  maxHeight: 'calc(100vh - 200px)',
+  '&::-webkit-scrollbar': {
+    width: '8px'
+  },
+  '&::-webkit-scrollbar-track': {
+    background: theme.palette.background.default
+  },
+  '&::-webkit-scrollbar-thumb': {
+    background: theme.palette.primary.light,
+    borderRadius: '4px'
+  }
+}));
+
+const DetailItem = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'flex-start',
+  gap: theme.spacing(2),
+  marginBottom: theme.spacing(3),
+  padding: theme.spacing(2),
+  borderRadius: theme.shape.borderRadius,
+  backgroundColor: alpha(theme.palette.primary.main, 0.04),
+  transition: 'transform 0.2s ease',
+  '&:hover': {
+    transform: 'translateX(4px)'
+  },
+  '& .MuiSvgIcon-root': {
+    color: theme.palette.primary.main,
+    fontSize: '1.5rem'
+  }
+}));
+
+const StatusHistoryItem = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(2),
+  padding: theme.spacing(2),
+  borderRadius: theme.shape.borderRadius,
+  backgroundColor: alpha(theme.palette.background.default, 0.6),
+  marginBottom: theme.spacing(1.5),
+  border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+  transition: 'all 0.2s ease',
+  '&:hover': {
+    backgroundColor: alpha(theme.palette.background.default, 0.9),
+    transform: 'translateX(4px)'
+  }
+}));
+
+// Add new styled component for action buttons
+const ActionButtonsContainer = styled(Stack)(({ theme }) => ({
+  flexWrap: 'nowrap',
+  overflowX: 'auto',
+  paddingBottom: theme.spacing(1),
+  '&::-webkit-scrollbar': {
+    height: '4px'
+  },
+  '&::-webkit-scrollbar-track': {
+    background: '#f1f1f1'
+  },
+  '&::-webkit-scrollbar-thumb': {
+    background: '#888',
+    borderRadius: '4px'
+  }
+}));
+
+const ActionButton = styled(Button)(({ theme }) => ({
+  borderRadius: '8px',
+  textTransform: 'none',
+  padding: '6px 16px',
+  transition: 'all 0.2s ease-in-out',
+  '&:hover': {
+    transform: 'translateY(-1px)',
+    boxShadow: theme.shadows[2],
+  },
+  '& .MuiButton-startIcon': {
+    marginRight: '8px',
+  }
+}));
+
+const MeetStatusChip = styled(Chip)(({ theme, statusvalue }) => ({
+  borderRadius: '12px',
+  height: '24px',
+  backgroundColor: statusvalue === 1 
+    ? theme.palette.success.light 
+    : theme.palette.warning.light,
+  color: statusvalue === 1 
+    ? theme.palette.success.dark 
+    : theme.palette.warning.dark,
+  '& .MuiChip-label': {
+    fontSize: '0.75rem',
+    fontWeight: 500,
+    padding: '0 8px'
+  }
+}));
+
+// Add these styled components
+const StatusTimelineContainer = styled(Box)(({ theme }) => ({
+  marginTop: theme.spacing(4),
+  padding: theme.spacing(3),
+  backgroundColor: alpha(theme.palette.background.paper, 0.6),
+  borderRadius: theme.shape.borderRadius * 2,
+  border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(2),
+    marginTop: theme.spacing(3)
+  }
+}));
+
+const StatusTimelineHeader = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(2),
+  marginBottom: theme.spacing(3),
+  '& .MuiSvgIcon-root': {
+    color: theme.palette.primary.main,
+    backgroundColor: alpha(theme.palette.primary.main, 0.1),
+    padding: theme.spacing(1),
+    borderRadius: '50%',
+    fontSize: '1.5rem'
+  }
+}));
+
+// Add these styled components
+const AddMeetingDialog = styled(Dialog)(({ theme }) => ({
+  '& .MuiDialog-paper': {
+    borderRadius: '16px',
+    maxWidth: '600px',
+    width: '100%',
+    margin: theme.spacing(2),
+    [theme.breakpoints.down('sm')]: {
+      margin: theme.spacing(1)
+    }
+  }
+}));
+
+const DialogHeader = styled(DialogTitle)(({ theme }) => ({
+  background: theme.palette.primary.main,
+  color: theme.palette.primary.contrastText,
+  padding: theme.spacing(3),
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(1),
+  '& .MuiSvgIcon-root': {
+    fontSize: '1.5rem'
+  }
+}));
+
+const FormContainer = styled(DialogContent)(({ theme }) => ({
+  padding: theme.spacing(3),
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(2)
+  }
+}));
+
+// Add these styled components
+const AddMeetingButton = styled(Button)(({ theme }) => ({
+  borderRadius: '12px',
+  padding: theme.spacing(1.5, 3),
+  backgroundColor: theme.palette.success.main,
+  color: theme.palette.common.white,
+  textTransform: 'none',
+  fontSize: '1rem',
+  fontWeight: 500,
+  boxShadow: 'none',
+  transition: 'all 0.2s ease-in-out',
+  '&:hover': {
+    backgroundColor: theme.palette.success.dark,
+    transform: 'translateY(-2px)',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+  },
+  [theme.breakpoints.down('sm')]: {
+    width: '100%',
+    padding: theme.spacing(1.2, 2),
+    fontSize: '0.9rem',
+  }
+}));
+
+const AddMeetingIcon = styled(AddIcon)(({ theme }) => ({
+  marginRight: theme.spacing(1),
+  fontSize: '1.5rem',
+  [theme.breakpoints.down('sm')]: {
+    fontSize: '1.2rem',
+  }
+}));
+
+// Add this styled component
+const StyledTextField = styled(TextField)(({ theme }) => ({
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '12px',
+    backgroundColor: alpha(theme.palette.background.paper, 0.8),
+    transition: 'all 0.2s ease-in-out',
+    '&:hover': {
+      backgroundColor: theme.palette.background.paper,
+    },
+    '&.Mui-focused': {
+      backgroundColor: theme.palette.background.paper,
+      boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`,
+    }
+  },
+  '& .MuiInputAdornment-root': {
+    '& .MuiSvgIcon-root': {
+      fontSize: '1.3rem',
+      [theme.breakpoints.down('sm')]: {
+        fontSize: '1.1rem',
+      }
+    }
+  },
+  '& .MuiInputLabel-root': {
+    fontSize: '1rem',
+    [theme.breakpoints.down('sm')]: {
+      fontSize: '0.9rem',
+    }
+  },
+  '& .MuiOutlinedInput-input': {
+    padding: theme.spacing(1.5, 2),
+    fontSize: '1rem',
+    [theme.breakpoints.down('sm')]: {
+      padding: theme.spacing(1.2, 1.5),
+      fontSize: '0.9rem',
+    }
+  }
+}));
+
+// Add ErrorBoundary component at the top
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Error caught by boundary:', error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <Box sx={{ p: 3 }}>Something went wrong. Please refresh the page.</Box>;
+    }
+    return this.props.children;
+  }
+}
+
 const Meets = () => {
   const {
     searchTerm,
@@ -168,7 +540,7 @@ const Meets = () => {
   const [meets, setMeets] = useState([]);
   const [meetLink, setMeetLink] = useState('https://meet.google.com/oas-nfxr-bvf');
   const [meetingTitle, setMeetingTitle] = useState('');
-  const [meetingTime, setMeetingTime] = useState(dayjs().add(10, 'minute').format('YYYY-MM-DDTHH:mm'));
+  const [meetingTime, setMeetingTime] = useState(new Date());
   const [attendees, setAttendees] = useState('');
   const [agenda, setAgenda] = useState('');
   const [editMode, setEditMode] = useState(false);
@@ -194,6 +566,15 @@ const Meets = () => {
   const [isCompleted, setIsCompleted] = useState(false);
   const [filter, setFilter] = useState('all');
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [sort, setSort] = useState('date');
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [selectedMeet, setSelectedMeet] = useState(null);
+  const [statusHistory, setStatusHistory] = useState([]);
+  const theme = useTheme();
+  const matches = useMediaQuery((theme) => theme.breakpoints.down('sm'));
+  const [searchQuery, setSearchQuery] = useState('');
+  const location = useLocation();
+  const [dateRange, setDateRange] = useState([null, null]);
 
   const suggestedAttendees = [
     {
@@ -229,7 +610,7 @@ const Meets = () => {
   const defaultMeetLink = 'https://meet.google.com/oas-nfxr-bvf';
 
   useEffect(() => {
-    fetchMeets();
+    fetchMeets(true);
     return () => setIsInitialLoad(false);
   }, []);
 
@@ -240,24 +621,26 @@ const Meets = () => {
     }
   }, []);
 
-  const fetchMeets = async () => {
+  const fetchMeets = async (showLoadingState = false, isLoadMore = false) => {
     try {
-      setLoading(true);
+      if (showLoadingState && !isLoadMore) {
+        setLoading(true);
+      }
+      
       const response = await axios.get(`${API_URL}/meets.php`);
       
       if (response.data) {
-        const formattedMeets = Array.isArray(response.data) ? response.data.map(meet => ({
-          ...meet,
-          meeting_time: dayjs(meet.meeting_time).format('YYYY-MM-DD HH:mm:ss'),
-          status: meet.status === 1 || meet.status === '1' || meet.status === true
-        })) : [];
-        
+        const formattedMeets = Array.isArray(response.data) ? response.data : [];
         setMeets(formattedMeets);
-        localStorage.setItem('meets', JSON.stringify(formattedMeets));
+        
+        // Update cache
+        localStorage.setItem('cachedMeets', JSON.stringify({
+          data: formattedMeets,
+          timestamp: Date.now()
+        }));
       }
     } catch (error) {
-      console.error('Error details:', error);
-      showSnackbar('Error fetching meets', 'error');
+      setError(error.message);
     } finally {
       setLoading(false);
       setIsInitialLoad(false);
@@ -281,160 +664,199 @@ const Meets = () => {
 
   const handleAddMeet = async () => {
     if (!meetingTitle || !meetingTime || !meetLink) {
-      showSnackbar('Please fill in all required fields', 'error');
+      const event = new CustomEvent('showToast', {
+        detail: {
+          message: 'Please fill in all required fields',
+          type: 'error',
+          icon: 'Error'
+        }
+      });
+      window.dispatchEvent(event);
       return;
     }
 
     try {
+      // Clean up the data before sending
+      const cleanMeetingTitle = meetingTitle.replace(/window\.dispatch.*?\)/, '').trim();
+      const cleanAgenda = agenda.replace(/window\.dispatch.*?\)/, '').trim();
+
       const meetData = {
-        meeting_title: meetingTitle,
+        meeting_title: cleanMeetingTitle,
         meeting_time: dayjs(meetingTime).format('YYYY-MM-DD HH:mm:ss'),
         meet_link: meetLink || defaultMeetLink,
-        agenda: agenda || '',
+        agenda: cleanAgenda,
         attendees: attendees || '',
-        status: isCompleted ? 1 : 0  // Convert boolean to integer
+        status: 0
       };
 
       const response = await axios.post(`${API_URL}/meets.php`, meetData);
 
-      if (response.data && response.data.status === 'success') {
-        await fetchMeets();
-        handleCloseDialog();
-        showSnackbar('Meeting added successfully', 'success');
-        
-        // Create notification for the new meeting
-        await createNotification(
-          'New Meeting Created',
-          `Meeting "${meetingTitle}" has been scheduled for ${dayjs(meetingTime).format('MMM D, YYYY h:mm A')}`,
+      if (response.data) {
+        // System notification
+        showNotification(
+          '✨ Meet Created',
+          `"${cleanMeetingTitle}" has been created`,
           'medium'
         );
-      } else {
-        throw new Error(response.data?.message || 'Failed to add meeting');
+
+        // Close all dialogs first
+        setOpenDialog(false);
+        setViewDialogOpen(false);
+        setSelectedMeet(null);
+        
+        // Reset form
+        setMeetingTitle('');
+        setMeetingTime(new Date());
+        setMeetLink(defaultMeetLink);
+        setAgenda('');
+        setAttendees('');
+
+        // Bottom popup notification
+        const event = new CustomEvent('showToast', {
+          detail: {
+            message: 'Meet created successfully',
+            type: 'success',
+            icon: 'CheckCircle'
+          }
+        });
+        window.dispatchEvent(event);
+
+        // Fetch updated data immediately
+        await fetchMeets(true);
       }
     } catch (error) {
       console.error('Error:', error);
-      showSnackbar(error.message || 'Failed to add meeting', 'error');
+      const event = new CustomEvent('showToast', {
+        detail: {
+          message: error.message || 'Failed to create meet',
+          type: 'error',
+          icon: 'Error'
+        }
+      });
+      window.dispatchEvent(event);
     }
   };
 
-  const handleEditMeet = async (meetId) => {
-    if (!meetingTitle || !meetingTime || !meetLink) {
-      showSnackbar('Please fill in all required fields', 'error');
-      return;
-    }
+  const handleEdit = (meet) => {
+    // Set all the form fields with the meet data
+    setMeetingTitle(meet.meeting_title || '');
+    setMeetingTime(meet.meeting_time ? new Date(meet.meeting_time) : new Date());
+    setMeetLink(meet.meet_link || defaultMeetLink);
+    setAgenda(meet.agenda || '');
+    setAttendees(meet.attendees || '');
+    
+    // Set edit mode and selected meet
+    setEditMode(true);
+    setSelectedMeet(meet);
+    
+    // Close view dialog and open edit dialog
+    setViewDialogOpen(false);
+    setOpenDialog(true);
+  };
 
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    
     try {
+      if (!selectedMeet?.id || !meetingTitle || !meetingTime || !meetLink) {
+        throw new Error('Please fill in all required fields');
+      }
+
       const meetData = {
-        id: meetId,
+        id: selectedMeet.id,
         meeting_title: meetingTitle,
         meeting_time: dayjs(meetingTime).format('YYYY-MM-DD HH:mm:ss'),
         meet_link: meetLink || defaultMeetLink,
         agenda: agenda || '',
         attendees: attendees || '',
-        status: isCompleted ? 1 : 0
+        status: selectedMeet.status || 0
       };
 
       const response = await axios.put(`${API_URL}/meets.php`, meetData);
 
-      if (response.data && response.data.status === 'success') {
-        await fetchMeets();
-        handleCloseDialog();
-        showSnackbar('Meeting updated successfully', 'success');
-        
-        // Create notification for the updated meeting
-        await createNotification(
-          'Meeting Updated',
-          `Meeting "${meetingTitle}" has been updated`,
+      if (response.data?.success) {
+        setMeets(prevMeets => 
+          prevMeets.map(meet => 
+            meet.id === selectedMeet.id ? { ...meet, ...meetData } : meet
+          )
+        );
+
+        showNotification(
+          '📝 Meet Updated',
+          `"${meetingTitle}" has been updated`,
           'medium'
         );
+
+        resetFormAndClose();
+        await fetchMeets(true);
       } else {
-        throw new Error(response.data?.message || 'Failed to update meeting');
+        throw new Error(response.data?.message || 'Update failed');
       }
     } catch (error) {
-      console.error('Error updating meeting:', error);
-      showSnackbar(error.message || 'Failed to update meeting', 'error');
+      showErrorToast(error.message);
     }
   };
 
   const handleDeleteConfirm = async () => {
-    if (meetToDelete) {
-      try {
-        const response = await fetch(`${API_URL}/meets.php`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ id: meetToDelete.id })
-        });
+    if (!selectedMeet || !selectedMeet.id) return;
 
-        if (response.ok) {
-          await fetchMeets();
-          setDeleteConfirmOpen(false);
-          setMeetToDelete(null);
-          showSnackbar('Meeting deleted successfully', 'success');
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        showSnackbar('Failed to delete meeting', 'error');
+    try {
+      const response = await axios.delete(`${API_URL}/meets.php`, {
+        params: { id: selectedMeet.id }
+      });
+
+      if (response.data && response.data.status === 'success') {
+        // System notification
+        showNotification(
+          '🗑️ Meet Deleted',
+          `"${selectedMeet.meeting_title}" has been deleted`,
+          'medium'
+        );
+
+        // Close all relevant dialogs first
+        setDeleteConfirmOpen(false);
+        setViewDialogOpen(false);
+        setSelectedMeet(null);
+
+        // Update local state
+        setMeets(prevMeets => prevMeets.filter(meet => meet.id !== selectedMeet.id));
+        
+        // Bottom popup notification (Snackbar)
+        const event = new CustomEvent('showToast', {
+          detail: {
+            message: 'Meet deleted successfully',
+            type: 'success',
+            icon: 'CheckCircle'
+          }
+        });
+        window.dispatchEvent(event);
+
+        // Fetch updated data immediately
+        await fetchMeets(true);
+      } else {
+        throw new Error('Failed to delete meet');
       }
+    } catch (error) {
+      console.error('Error deleting meet:', error);
+      
+      // Error bottom popup notification
+      const event = new CustomEvent('showToast', {
+        detail: {
+          message: 'Error deleting meet',
+          type: 'error',
+          icon: 'Error'
+        }
+      });
+      window.dispatchEvent(event);
     }
   };
 
   const handleCloseDialog = () => {
-    resetForm();
-    setEditMode(false);
     setOpenDialog(false);
-  };
-
-  const handleEdit = (meet) => {
-    setMeetingTitle(meet.meeting_title);
-    setMeetingTime(dayjs(meet.meeting_time).format('YYYY-MM-DDTHH:mm'));
-    setMeetLink(meet.meet_link);
-    setAgenda(meet.agenda);
-    setAttendees(meet.attendees);
-    setIsCompleted(meet.status);
-    setEditMode(true);
-    setMeetToEdit(meet);
-    setOpenDialog(true);
-  };
-
-  const handleUpdate = async () => {
-    setSubmitted(true);
-
-    if (!meetingTitle.trim()) {
-      showSnackbar('Meeting title is required', 'error');
-      return;
-    }
-
-    try {
-      const updateData = {
-        meetLink: meetLink || defaultMeetLink,
-        meetingTitle,
-        meetingTime: dayjs(meetingTime).format('YYYY-MM-DD HH:mm:ss'),
-        attendees,
-        agenda
-      };
-
-      const response = await axios.put(`${API_URL}/meets.php?id=${editMeetId}`, updateData);
-
-      if (response.data.error) {
-        throw new Error(response.data.error);
-      }
-
-      await createNotification(
-        'Meeting Updated',
-        `Meeting "${meetingTitle}" has been updated`,
-        'medium'
-      );
-      await playNotificationSound('general');
-
-      showSnackbar('Meeting updated successfully');
-      resetForm();
-      fetchMeets();
-    } catch (error) {
-      console.error('Error updating meet:', error);
-      showSnackbar(error.message || 'Error updating meet', 'error');
-    }
+    setViewDialogOpen(false);
+    setEditMode(false);
+    setMeetToEdit(null);
+    resetForm();
   };
 
   const handleDeleteClick = (meet) => {
@@ -442,9 +864,15 @@ const Meets = () => {
     setDeleteConfirmOpen(true);
   };
 
-  const handleCopy = (link) => {
-    navigator.clipboard.writeText(link);
-    showSnackbar('Meeting link copied to clipboard');
+  const handleCopy = async (meet) => {
+    try {
+      const formattedContent = formatMeetContent(meet);
+      await navigator.clipboard.writeText(formattedContent);
+      showSnackbar('Meeting details copied to clipboard', 'success');
+    } catch (error) {
+      console.error('Error copying:', error);
+      showSnackbar('Failed to copy meeting details', 'error');
+    }
   };
 
   const handleJoinMeet = (link) => {
@@ -473,7 +901,7 @@ const Meets = () => {
   };
 
   const handleSortChange = (type) => {
-    setSortBy(type);
+    setSort(type);
   };
 
   const getFilteredMeets = () => {
@@ -538,13 +966,13 @@ const Meets = () => {
     setOpenDialog(true);
   };
 
-  const handleSubmit = async () => {
-    if (editMode && meetToEdit) {
-      await handleEditMeet(meetToEdit.id);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (editMode && selectedMeet) {
+      await handleUpdate(e);
     } else {
       await handleAddMeet();
     }
-    handleCloseDialog();
   };
 
   const isUpcoming = (meetingTime) => {
@@ -604,7 +1032,7 @@ const Meets = () => {
 
   const resetForm = () => {
     setMeetingTitle('');
-    setMeetingTime(dayjs().add(10, 'minute').format('YYYY-MM-DDTHH:mm'));
+    setMeetingTime(new Date());
     setMeetLink('https://meet.google.com/oas-nfxr-bvf');
     setAgenda('');
     setAttendees('');
@@ -621,76 +1049,257 @@ const Meets = () => {
       });
   };
 
-  // Enhanced filter function with memoization
+  // Add search filtering logic
   const filteredMeets = useMemo(() => {
-    return meets.filter(meet => {
-      const searchFields = [
-        meet.meeting_title,
-        meet.agenda,
-        meet.attendees,
-        meet.meet_link
-      ].filter(Boolean).join(' ').toLowerCase();
+    let filtered = [...meets];
 
-      const matchesSearch = !searchTerm ||
-        searchFields.includes(searchTerm.toLowerCase());
+    // Search filter
+    if (searchQuery) {
+      filtered = filtered.filter(meet =>
+        meet.meeting_title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        meet.agenda?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        meet.attendees?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
 
-      const matchesPriority = priority === 'all' || meet.priority === priority;
+    // Apply date range filter
+    if (dateRange[0] && dateRange[1]) {
+      filtered = filtered.filter(meet => {
+        const meetDate = new Date(meet.meeting_time);
+        const startDate = new Date(dateRange[0]);
+        const endDate = new Date(dateRange[1]);
+        // Set time to start and end of day for proper comparison
+        startDate.setHours(0, 0, 0, 0);
+        endDate.setHours(23, 59, 59, 999);
+        return meetDate >= startDate && meetDate <= endDate;
+      });
+    }
 
-      const matchesStatus = status === 'all' ||
-        (status === 'completed' && meet.status) ||
-        (status === 'pending' && !meet.status);
+    // Add other filters if needed (priority, status, etc.)
+    if (priority !== 'all') {
+      filtered = filtered.filter(meet => meet.priority === priority);
+    }
 
-      const meetDate = dayjs(meet.meeting_time);
-      const now = dayjs();
+    if (status !== 'all') {
+      filtered = filtered.filter(meet => 
+        status === 'completed' ? meet.status === 1 : meet.status === 0
+      );
+    }
 
-      const matchesDueDate = dueDate === 'all' ||
-        (dueDate === 'today' && meetDate.isSame(now, 'day')) ||
-        (dueDate === 'week' && meetDate.isAfter(now) && meetDate.isBefore(now.add(7, 'day'))) ||
-        (dueDate === 'overdue' && meetDate.isBefore(now));
+    return filtered;
+  }, [meets, searchQuery, dateRange, priority, status]);
 
-      return matchesSearch && matchesPriority && matchesStatus && matchesDueDate;
-    });
-  }, [meets, searchTerm, priority, status, dueDate]);
-
+  // Add search event listener
   useEffect(() => {
-    const handleCreateMeet = () => {
-      handleOpenDialog(); // Your existing dialog open function
+    const handleSearch = (event) => {
+      if (location.pathname === '/meets') {  // Only handle search if we're on meets page
+        console.log('Search event received in Meets:', event.detail);
+        setSearchQuery(event.detail.searchQuery || '');
+      }
     };
-    
-    window.addEventListener('openCreateMeet', handleCreateMeet);
-    return () => window.removeEventListener('openCreateMeet', handleCreateMeet);
-  }, []);
 
+    const handleFilter = (event) => {
+      if (location.pathname === '/meets') {
+        console.log('Filter event received in Meets:', event.detail);
+        // Handle any filter changes if needed
+      }
+    };
+
+    const handleClearAll = () => {
+      if (location.pathname === '/meets') {
+        console.log('Clear all filters in Meets');
+        setSearchQuery('');
+        setPriority('all');
+        setStatus('all');
+        setDueDate('all');
+      }
+    };
+
+    window.addEventListener('searchQueryChange', handleSearch);
+    window.addEventListener('filterChange', handleFilter);
+    window.addEventListener('clearAllFilters', handleClearAll);
+
+    return () => {
+      window.removeEventListener('searchQueryChange', handleSearch);
+      window.removeEventListener('filterChange', handleFilter);
+      window.removeEventListener('clearAllFilters', handleClearAll);
+    };
+  }, [location.pathname]);
+
+  // Enhanced notification system
+  const createEnhancedNotification = async (config) => {
+    const {
+      title,
+      message,
+      priority = 'medium',
+      type = 'info',
+      duration = 5000,
+      sound = true
+    } = config;
+
+    // Browser notification
+    if ('Notification' in window && Notification.permission === 'granted') {
+      const notification = new Notification(title, {
+        body: message,
+        icon: '/favicon.ico',
+        badge: '/favicon.ico',
+        tag: 'meet-notification',
+        renotify: true,
+        silent: !sound
+      });
+
+      notification.onclick = () => {
+        window.focus();
+        notification.close();
+      };
+    }
+
+    // In-app notification
+    const event = new CustomEvent('todoAction', {
+      detail: {
+        title,
+        message,
+        priority,
+        type,
+        duration
+      }
+    });
+    window.dispatchEvent(event);
+
+    if (sound) {
+      await playNotificationSound(type);
+    }
+  };
+
+  // Enhanced meeting status management
+  const handleStatusUpdate = async (meetId) => {
+    try {
+      const meetToUpdate = meets.find(meet => meet.id === meetId);
+      if (!meetToUpdate) return;
+
+      const newStatus = meetToUpdate.status === 1 ? 0 : 1;
+      
+      // First update the local state immediately
+      setMeets(prevMeets =>
+        prevMeets.map(meet =>
+          meet.id === meetId ? { ...meet, status: newStatus } : meet
+        )
+      );
+
+      const response = await axios.put(`${API_URL}/meets.php`, {
+        id: meetId,
+        status: newStatus,
+        meeting_title: meetToUpdate.meeting_title,
+        meeting_time: meetToUpdate.meeting_time,
+        meet_link: meetToUpdate.meet_link,
+        agenda: meetToUpdate.agenda,
+        attendees: meetToUpdate.attendees
+      });
+
+      if (!response.data?.success) {
+        // Revert the local state if API call fails
+        setMeets(prevMeets =>
+          prevMeets.map(meet =>
+            meet.id === meetId ? { ...meet, status: meetToUpdate.status } : meet
+          )
+        );
+        throw new Error('Failed to update status');
+      }
+
+      // Show success notification
+      const event = new CustomEvent('showToast', {
+        detail: {
+          message: `Meet marked as ${newStatus === 1 ? 'completed' : 'pending'}`,
+          type: 'success',
+          icon: 'CheckCircle'
+        }
+      });
+      window.dispatchEvent(event);
+
+      // Close any open dialogs
+      setViewDialogOpen(false);
+      setOpenDialog(false);
+
+    } catch (error) {
+      console.error('Error updating meet status:', error);
+      const event = new CustomEvent('showToast', {
+        detail: {
+          message: 'Failed to update meet status',
+          type: 'error',
+          icon: 'Error'
+        }
+      });
+      window.dispatchEvent(event);
+    }
+  };
+
+  // Update the handleCompletedClick to be more robust
+  const handleCompletedClick = async (meet) => {
+    if (!meet || !meet.id) {
+      console.error('Invalid meet object');
+      return;
+    }
+
+    try {
+      await handleStatusUpdate(meet.id);
+    } catch (error) {
+      console.error('Error handling completed click:', error);
+    }
+  };
+
+  // Enhanced meeting reminder system
+  const checkUpcomingMeetings = async () => {
+    const now = moment();
+    
+    meets.forEach(async (meet) => {
+      if (!meet.status) {
+        const meetingTime = moment(meet.meeting_time);
+        const minutesUntilMeeting = meetingTime.diff(now, 'minutes');
+
+        // Different notification times
+        const notificationTimes = [
+          { minutes: 1440, message: '24 hours' }, // 24 hours
+          { minutes: 60, message: '1 hour' },     // 1 hour
+          { minutes: 15, message: '15 minutes' }   // 15 minutes
+        ];
+
+        const matchingTime = notificationTimes.find(
+          time => Math.abs(minutesUntilMeeting - time.minutes) < 1
+        );
+
+        if (matchingTime) {
+          await createEnhancedNotification({
+            title: `Upcoming Meeting Reminder`,
+            message: `"${meet.meeting_title}" starts in ${matchingTime.message}`,
+            priority: 'high',
+            type: 'warning',
+            sound: true
+          });
+        }
+      }
+    });
+  };
+
+  // Enhanced share functionality
   const handleShare = async (meet) => {
     try {
-      const formattedDate = dayjs(meet.meeting_time).format('DD/MM/YYYY');
-      const formattedTime = dayjs(meet.meeting_time).format('hh:mm A');
-      const formattedDateTime = dayjs(meet.meeting_time).format('DD/MM/YYYY hh:mm A');
-      
-      // Email subject format
-      const subject = `${meet.meeting_title} - ${formattedDateTime}`;
-      
-      // Email body format
-      const shareText = 
-`Meeting Reminder:
-Title: ${meet.meeting_title}
-🗓 Date: ${formattedDate}
-🕛 Time: ${formattedTime}
-📍 Google Meet Link: ${meet.meet_link}
+      const shareData = {
+        title: `Meeting: ${meet.meeting_title}`,
+        text: formatMeetContent(meet),
+        url: meet.meet_link
+      };
 
-Looking forward to your participation!`;
-
-      if (navigator.share) {
-        await navigator.share({
-          title: subject,
-          text: shareText,
-          url: meet.meet_link
+      if (navigator.canShare && navigator.canShare(shareData)) {
+        await navigator.share(shareData);
+        await createEnhancedNotification({
+          title: 'Shared Successfully',
+          message: 'Meeting details have been shared',
+          type: 'success',
+          sound: false
         });
-        showSnackbar('Meeting details shared successfully', 'success');
       } else {
-        // For email-like sharing, combine subject and body
-        const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(shareText)}`;
-        window.location.href = mailtoLink;
+        await navigator.clipboard.writeText(shareData.text);
+        showSnackbar('Meeting details copied to clipboard', 'success');
       }
     } catch (error) {
       console.error('Error sharing:', error);
@@ -698,363 +1307,1190 @@ Looking forward to your participation!`;
     }
   };
 
-  // Add loading skeleton component
-  const LoadingSkeleton = () => (
-    <CustomGrid container spacing={2}>
-      {[1, 2, 3, 4].map((item) => (
-        <Grid item xs={12} sm={6} md={4} key={item}>
-          <MeetItem elevation={2}>
-            <MeetContent>
-              <Skeleton variant="text" width="80%" height={30} />
-              <Skeleton variant="text" width="60%" />
-              <Skeleton variant="rectangular" height={60} />
-              <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between' }}>
-                <Skeleton variant="rounded" width={100} height={32} />
-                <Skeleton variant="rounded" width={100} height={32} />
-              </Box>
-            </MeetContent>
-          </MeetItem>
-        </Grid>
-      ))}
-    </CustomGrid>
-  );
+  // Add formatMeetContent function
+  const formatMeetContent = (meet) => {
+    const formattedDate = moment(meet.meeting_time).format('DD/MM/YYYY');
+    const formattedTime = moment(meet.meeting_time).format('hh:mm A');
+    const status = meet.status ? '✅ Completed' : '⏳ Pending';
+    
+    return `📅 Meeting Details
+━━━━━━━━━━━━━━━━━━━━━
+📌 Title: ${meet.meeting_title}
+📝 Agenda: ${meet.agenda || 'No agenda set'}
+👥 Attendees: ${meet.attendees || 'No attendees set'}
+🔗 Meet Link: ${meet.meet_link}
+🗓️ Date: ${formattedDate}
+⏰ Time: ${formattedTime}
+${status}
+━━━━━━━━━━━━━━━━━━━━━
 
-  return (
-    <Box sx={{ 
-      p: 3,
-      mt: 8
-    }}>
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        mb: 3,
-        flexWrap: { xs: 'wrap', sm: 'nowrap' },
-        gap: 2
-      }}>
-        <Typography 
-          variant="h5" 
-          component="h1" 
-          sx={{ 
-            display: 'flex', 
-            alignItems: 'center',
-            gap: 1,
-            fontWeight: 500,
-            fontSize: { xs: '1.2rem', sm: '1.5rem' },
-            mt: 3
-          }}
-        >
-          Meet List
-          <Chip 
-            label={meets.length} 
-            color="primary" 
-            size="small"
-            sx={{ 
-              borderRadius: '12px',
-              backgroundColor: 'primary.main',
-              color: 'white',
-              fontWeight: 'bold',
-              fontSize: { xs: '0.8rem', sm: '1rem' },
-            }}
-          />
-        </Typography>
-      </Box>
+🎯 Don't forget to join on time!`;
+  };
 
-      {isInitialLoad ? (
-        <LoadingSkeleton />
-      ) : loading ? (
-        <LoadingSkeleton />
-      ) : meets.length === 0 ? (
-        <Fade in={true}>
-          <Paper
-            sx={{
-              p: 4,
-              display: 'flex',
-              flexDirection: 'column',
+  // Add new function for handling status update
+  const handleStatusUpdateClick = (meet) => {
+    setMeetToEdit(meet);
+    handleStatusUpdate(meet.id);
+  };
+
+  // Update renderViewDialog to include ActionButtons
+  const renderViewDialog = () => (
+    <DetailDialog
+      open={viewDialogOpen}
+      onClose={handleViewClose}
+      fullWidth
+      maxWidth="md"
+      TransitionComponent={Fade}
+      transitionDuration={400}
+    >
+      {selectedMeet && (
+        <>
+          <DetailHeader>
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
               alignItems: 'center',
-              gap: 2,
-              bgcolor: 'background.default'
-            }}
-          >
-            <Typography variant="h6" color="text.secondary">
-              No meetings scheduled
-            </Typography>
-            <Typography color="text.secondary" align="center">
-              Start by creating your first meeting
-            </Typography>
-            <Button
-              variant="contained"
-              onClick={handleOpenDialog}
-              startIcon={<AddIcon />}
-              sx={{
-                textTransform: 'none',
-                borderRadius: 20,
-                px: 3
+              mb: 2 
+            }}>
+              <Typography 
+                variant="overline" 
+                sx={{ 
+                  opacity: 0.9,
+                  letterSpacing: '0.1em',
+                  fontWeight: 500
+                }}
+              >
+                Meeting Details
+              </Typography>
+              <MeetStatusChip
+                label={selectedMeet.status === 1 ? "Completed" : "Pending"}
+                statusvalue={selectedMeet.status}
+                size="small"
+                sx={{ 
+                  borderRadius: '12px',
+                  px: 2,
+                  '& .MuiChip-label': {
+                    fontWeight: 600
+                  }
+                }}
+              />
+            </Box>
+            <Typography 
+              variant="h5" 
+              sx={{ 
+                fontWeight: 600,
+                lineHeight: 1.3,
+                mb: 1
               }}
             >
-              Schedule Meeting
-            </Button>
-          </Paper>
-        </Fade>
-      ) : (
-        <Fade in={true}>
-          <CustomGrid container spacing={2}>
-            {filteredMeets.map((meet) => (
-              <Grid item xs={12} sm={6} md={4} key={meet.id}>
-                <MeetItem elevation={2}>
-                  <MeetContent>
-                    <Box sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 1,
-                      mb: 1
-                    }}>
-                      <Box sx={{
+              {selectedMeet.meeting_title}
+            </Typography>
+          </DetailHeader>
+
+          <DetailContent>
+            <Grid container spacing={{ xs: 2, md: 3 }}>
+              <Grid item xs={12} md={8}>
+                {/* Main Details */}
+                <DetailItem>
+                  <AccessTimeIcon />
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                      Schedule
+                    </Typography>
+                    <Typography 
+                      variant="body1" 
+                      fontWeight={500}
+                      sx={{ 
+                        wordBreak: 'break-word',
+                        [theme.breakpoints.down('sm')]: {
+                          fontSize: '0.875rem'
+                        }
+                      }}
+                    >
+                      {moment(selectedMeet.meeting_time).format('MMMM D, YYYY [at] h:mm A')}
+                    </Typography>
+                  </Box>
+                </DetailItem>
+
+                <DetailItem>
+                  <AssignmentIcon />
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                      Agenda
+                    </Typography>
+                    <Typography 
+                      variant="body1" 
+                      sx={{ 
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word',
+                        [theme.breakpoints.down('sm')]: {
+                          fontSize: '0.875rem'
+                        }
+                      }}
+                    >
+                      {selectedMeet.agenda || 'No agenda set'}
+                    </Typography>
+                  </Box>
+                </DetailItem>
+
+                <DetailItem>
+                  <VideocamIcon />
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                      Meet Link
+                    </Typography>
+                    <Link
+                      href={selectedMeet.meet_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      sx={{ 
+                        wordBreak: 'break-all',
                         display: 'flex',
-                        alignItems: 'flex-start',
+                        alignItems: 'center',
                         gap: 1,
-                        flexWrap: 'wrap'
-                      }}>
-                        <Typography
-                          variant="h6"
-                          component="h3"
-                          sx={{
-                            flex: 1,
-                            minWidth: { xs: '100%', sm: 0 },
-                            wordBreak: 'break-word',
-                            fontSize: { xs: '1rem', sm: '1.1rem' },
-                            lineHeight: 1.3,
-                            mb: { xs: 1, sm: 0 }
-                          }}
-                        >
-                          {meet.meeting_title}
-                        </Typography>
+                        color: 'primary.main',
+                        textDecoration: 'none',
+                        '&:hover': {
+                          textDecoration: 'underline'
+                        },
+                        [theme.breakpoints.down('sm')]: {
+                          fontSize: '0.875rem'
+                        }
+                      }}
+                    >
+                      {selectedMeet.meet_link}
+                      <OpenInNewIcon sx={{ fontSize: '1rem' }} />
+                    </Link>
+                  </Box>
+                </DetailItem>
+              </Grid>
 
-                        <Box sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 0.5,
-                          ml: { xs: 0, sm: 'auto' },
-                          order: { xs: -1, sm: 0 }
-                        }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <IconButton
-                              size="small"
-                              onClick={() => copyToClipboard(meet.meet_link)}
-                              sx={{
-                                padding: 0.5,
-                                color: 'success.main',
-                              }}
-                            >
-                              <ContentCopyIcon fontSize="small" />
-                            </IconButton>
-
-                            <IconButton
-                              size="small"
-                              onClick={() => handleEdit(meet)}
-                              sx={{
-                                padding: 0.5,
-                                color: 'primary.main',
-                              }}
-                            >
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              onClick={() => handleShare(meet)}
-                              sx={{
-                                padding: 0.5,
-                                color: 'info.main',
-                              }}
-                            >
-                              <ShareIcon fontSize="small" />
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              onClick={() => handleDeleteClick(meet)}
-                              sx={{
-                                padding: 0.5,
-                                color: 'error.main',
-                              }}
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </Box>
-
-                          
-                        </Box>
-                      </Box>
-
-                      <Typography
-                        color="text.secondary"
-                        sx={{
-                          fontSize: '0.875rem',
-                          wordBreak: 'break-word',
-                          whiteSpace: 'pre-wrap'
-                        }}
-                      >
-                        {meet.agenda || 'No agenda set'}
-                      </Typography>
-
-                      <Box sx={{ mt: 1 }}>
-                        <Typography variant="caption" color="text.secondary">
-                          Attendees:
-                        </Typography>
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
-                          {meet.attendees?.split(',').map((attendee, index) => (
-                            <Chip
-                              key={index}
-                              size="small"
-                              label={attendee.trim()}
-                              sx={{
-                                height: '24px',
-                                '& .MuiChip-label': {
-                                  fontSize: '0.75rem'
-                                }
-                              }}
-                            />
-                          ))}
-                        </Box>
-                      </Box>
-
-                      <Typography variant="caption" color="text.secondary">
-                        Status: {meet.status ? 'Completed' : 'Not Completed'}
-                      </Typography>
-                    </Box>
-
-                    <Box sx={{
+              <Grid item xs={12} md={4}>
+                {/* Attendees Section */}
+                <Paper sx={{ 
+                  p: { xs: 1.5, sm: 2 }, 
+                  bgcolor: 'background.default',
+                  borderRadius: 2
+                }}>
+                  <Typography 
+                    variant="subtitle2" 
+                    sx={{ 
+                      mb: 2,
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'space-between',
-                      flexWrap: 'wrap',
                       gap: 1,
-                      mt: 'auto',
-                      pt: 1
-                    }}>
-                      <Tooltip title={moment(meet.meeting_time).format('MMMM Do YYYY, h:mm a')}>
-                        <TimeChip
-                          icon={<ScheduleIcon sx={{ fontSize: '0.875rem' }} />}
-                          label={moment(meet.meeting_time).fromNow()}
+                      color: 'text.secondary'
+                    }}
+                  >
+                    <PeopleAltIcon sx={{ fontSize: '1.2rem' }} />
+                    Attendees
+                  </Typography>
+                  <Stack 
+                    spacing={1}
+                    sx={{
+                      maxHeight: { xs: '150px', sm: '200px' },
+                      overflowY: 'auto',
+                      pr: 1
+                    }}
+                  >
+                    {selectedMeet.attendees?.split(',')
+                      .filter(attendee => attendee && attendee.trim())
+                      .map((attendee, index) => {
+                        const trimmedAttendee = attendee.trim();
+                        const initial = trimmedAttendee ? trimmedAttendee[0].toUpperCase() : '?';
+                        
+                        return (
+                          <Chip
+                            key={index}
+                            label={trimmedAttendee}
+                            size="small"
+                            avatar={
+                              <Avatar sx={{ 
+                                bgcolor: `primary.${index % 3 ? 'light' : 'main'}`,
+                                width: { xs: 24, sm: 32 },
+                                height: { xs: 24, sm: 32 }
+                              }}>
+                                {initial}
+                              </Avatar>
+                            }
+                            sx={{ 
+                              borderRadius: '8px',
+                              '& .MuiChip-label': {
+                                px: 1,
+                                fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                              }
+                            }}
+                          />
+                        );
+                      })}
+                  </Stack>
+                </Paper>
+              </Grid>
+            </Grid>
+
+            {/* Status History Section */}
+            <StatusTimelineContainer>
+              <StatusTimelineHeader>
+                <HistoryIcon />
+                <Box>
+                  <Typography 
+                    variant="h6" 
+                    sx={{ 
+                      fontWeight: 600,
+                      fontSize: { xs: '1.1rem', sm: '1.25rem' },
+                      lineHeight: 1.2
+                    }}
+                  >
+                    Status History
+                  </Typography>
+                  <Typography 
+                    variant="caption" 
+                    color="text.secondary"
+                    sx={{ display: 'block', mt: 0.5 }}
+                  >
+                    Track all status changes
+                  </Typography>
+                </Box>
+              </StatusTimelineHeader>
+
+              <Timeline 
+                sx={{ 
+                  p: 0,
+                  m: 0,
+                  '& .MuiTimelineItem-root:before': {
+                    flex: 0,
+                    padding: 0
+                  }
+                }}
+              >
+                {statusHistory.map((history, index) => (
+                  <TimelineItem 
+                    key={index}
+                    sx={{
+                      minHeight: 'auto',
+                      '&:last-child .MuiTimelineConnector-root': {
+                        display: 'none'
+                      }
+                    }}
+                  >
+                    <TimelineSeparator>
+                      <TimelineDot
+                        sx={{
+                          margin: '6px 0',
+                          padding: '4px',
+                          boxShadow: 'none',
+                          ...(history.status === 'COMPLETED' 
+                            ? {
+                                bgcolor: 'success.light',
+                                borderColor: 'success.main'
+                              }
+                            : {
+                                bgcolor: 'warning.light',
+                                borderColor: 'warning.main'
+                              }
+                          )
+                        }}
+                      >
+                        {history.status === 'COMPLETED' 
+                          ? <CheckCircleIcon sx={{ fontSize: '1rem', color: 'success.main' }} />
+                          : <PendingIcon sx={{ fontSize: '1rem', color: 'warning.main' }} />
+                        }
+                      </TimelineDot>
+                      <TimelineConnector 
+                        sx={{ 
+                          bgcolor: 'divider',
+                          width: '1px'
+                        }}
+                      />
+                    </TimelineSeparator>
+
+                    <TimelineContent
+                      sx={{
+                        py: '12px',
+                        px: 2,
+                        display: 'flex',
+                        flexDirection: { xs: 'column', sm: 'row' },
+                        alignItems: { xs: 'flex-start', sm: 'center' },
+                        gap: { xs: 0.5, sm: 2 }
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          minWidth: { sm: '140px' }
+                        }}
+                      >
+                        <Chip
+                          label={`Status: ${history.status}`}
                           size="small"
-                          color={moment(meet.meeting_time).isBefore(moment()) ? 'error' : 'primary'}
-                          variant="outlined"
                           sx={{
-                            height: '28px',
+                            borderRadius: '6px',
+                            fontWeight: 500,
+                            fontSize: '0.75rem',
+                            bgcolor: history.status === 'COMPLETED' 
+                              ? alpha(theme.palette.success.main, 0.1)
+                              : alpha(theme.palette.warning.main, 0.1),
+                            color: history.status === 'COMPLETED'
+                              ? 'success.main'
+                              : 'warning.main',
                             '& .MuiChip-label': {
-                              fontSize: '0.75rem'
+                              px: 1
                             }
                           }}
                         />
-                      </Tooltip>
+                      </Box>
 
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={<VideocamIcon sx={{ fontSize: '1rem' }} />}
-                        onClick={() => window.open(meet.meet_link, '_blank')}
-                        color="primary"
-                        sx={{
-                          borderRadius: '20px',
-                          minWidth: { xs: '90px', sm: '110px' },
-                          height: '28px',
-                          textTransform: 'none',
-                          fontWeight: 500,
-                          fontSize: '0.75rem',
-                          '&:hover': {
-                            transform: 'scale(1.02)'
-                          }
+                      <Typography 
+                        variant="caption" 
+                        sx={{ 
+                          color: 'text.secondary',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 0.5
                         }}
                       >
-                        Join Meet
-                      </Button>
-                    </Box>
-                  </MeetContent>
-                </MeetItem>
-              </Grid>
-            ))}
-          </CustomGrid>
-        </Fade>
+                        <AccessTimeIcon sx={{ fontSize: '1rem' }} />
+                        {moment(history.timestamp).format('MMM D, YYYY [at] h:mm A')}
+                      </Typography>
+                    </TimelineContent>
+                  </TimelineItem>
+                ))}
+              </Timeline>
+
+              {statusHistory.length === 0 && (
+                <Box 
+                  sx={{ 
+                    textAlign: 'center',
+                    py: 4,
+                    color: 'text.secondary'
+                  }}
+                >
+                  <HistoryIcon sx={{ fontSize: '2rem', opacity: 0.5, mb: 1 }} />
+                  <Typography variant="body2">
+                    No status changes recorded yet
+                  </Typography>
+                </Box>
+              )}
+            </StatusTimelineContainer>
+          </DetailContent>
+
+          {/* Action Buttons */}
+          <DialogActions sx={{ 
+            p: { xs: 1.5, sm: 3 }, 
+            bgcolor: 'background.default',
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            gap: { xs: 0.5, sm: 1 },
+            flexWrap: 'wrap',
+            '& .MuiButton-root': {
+              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+              padding: { xs: '4px 8px', sm: '6px 16px' }
+            }
+          }}>
+            <ActionButton
+              variant="outlined"
+              color="inherit"
+              startIcon={<ContentCopyIcon />}
+              onClick={() => handleCopy(selectedMeet)}
+              sx={{ 
+                color: 'text.secondary',
+                borderColor: 'divider',
+                '&:hover': {
+                  bgcolor: 'grey.100',
+                  borderColor: 'grey.400'
+                }
+              }}
+            >
+              Copy
+            </ActionButton>
+
+            <ActionButton
+              variant="outlined"
+              color="info"
+              startIcon={<ShareIcon />}
+              onClick={() => handleShare(selectedMeet)}
+            >
+              Share
+            </ActionButton>
+
+            <ActionButton
+              variant="outlined"
+              color="primary"
+              startIcon={<EditIcon />}
+              onClick={() => {
+                handleEdit(selectedMeet);
+              }}
+            >
+              Edit
+            </ActionButton>
+
+            <ActionButton
+              variant="outlined"
+              color="error"
+              startIcon={<DeleteIcon />}
+              onClick={() => handleDeleteClick(selectedMeet)}
+            >
+              Delete
+            </ActionButton>
+
+            <ActionButton
+              variant={selectedMeet.status === 1 ? "contained" : "outlined"}
+              color={selectedMeet.status === 1 ? "success" : "inherit"}
+              startIcon={selectedMeet.status === 1 ? <PendingIcon /> : <CheckCircleIcon />}
+              onClick={() => handleCompletedClick(selectedMeet)}
+              sx={selectedMeet.status === 1 ? {
+                bgcolor: 'success.main',
+                '&:hover': {
+                  bgcolor: 'success.dark'
+                }
+              } : {}}
+            >
+              {selectedMeet.status === 1 ? "Mark as Pending" : "Mark as Completed"}
+            </ActionButton>
+
+            <ActionButton
+              variant="contained"
+              color="primary"
+              startIcon={<VideocamIcon />}
+              onClick={() => window.open(selectedMeet.meet_link, '_blank')}
+              sx={{ 
+                ml: 'auto',
+                bgcolor: theme.palette.primary.main,
+                '&:hover': {
+                  bgcolor: theme.palette.primary.dark,
+                }
+              }}
+            >
+              Join Meet
+            </ActionButton>
+          </DialogActions>
+        </>
       )}
+    </DetailDialog>
+  );
 
-      {/* Add Meet Dialog */}
-      <Dialog open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>Add New Meet</DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-            <TextField
-              label="Meeting Title"
-              fullWidth
-              value={meetingTitle}
-              onChange={(e) => setMeetingTitle(e.target.value)}
-              required
-            />
-            <TextField
-              label="Meeting Time"
-              type="datetime-local"
-              fullWidth
-              value={meetingTime}
-              onChange={(e) => setMeetingTime(e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              required
-            />
-            <TextField
-              label="Meet Link"
-              fullWidth
-              value={meetLink}
-              onChange={(e) => setMeetLink(e.target.value)}
-              required
-            />
-            <TextField
-              label="Agenda"
-              fullWidth
-              multiline
-              rows={3}
-              value={agenda}
-              onChange={(e) => setAgenda(e.target.value)}
-            />
-            <TextField
-              label="Attendees (comma separated)"
-              fullWidth
-              value={attendees}
-              onChange={(e) => setAttendees(e.target.value)}
-              helperText="Enter email addresses separated by commas"
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={isCompleted}
-                  onChange={(e) => setIsCompleted(e.target.checked)}
-                />
-              }
-              label="Completed"
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ p: 2.5, pt: 0 }}>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleSubmit}
-            color="primary"
-            sx={{ borderRadius: '20px' }}
+  // Update renderMeetCard to remove action buttons
+  const renderMeetCard = (meet) => (
+    <MeetCard elevation={1} onClick={() => handleViewOpen(meet)}>
+      <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        {/* Priority Badge */}
+        {meet.priority === 'high' && (
+          <PriorityBadge label="HIGH" />
+        )}
+
+        {/* Title */}
+        <Typography
+          variant="h6"
+          sx={{
+            fontSize: { xs: '1rem', sm: '1.1rem' },
+            fontWeight: 600,
+            mb: 2,
+            pr: 4, // Space for priority badge
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+            lineHeight: 1.3
+          }}
+        >
+          {meet.meeting_title}
+        </Typography>
+
+        {/* Date and Time */}
+        <Box 
+          sx={{ 
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            mb: 2,
+            backgroundColor: alpha(theme.palette.success.main, 0.1),
+            p: 1,
+            borderRadius: 1,
+            width: 'fit-content'
+          }}
+        >
+          <CalendarTodayIcon 
+            sx={{ 
+              fontSize: '1rem',
+              color: 'success.main'
+            }} 
+          />
+          <Typography 
+            variant="caption"
+            sx={{ 
+              color: 'success.main',
+              fontWeight: 500
+            }}
           >
-            {editMode ? 'Update Meet' : 'Add Meet'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+            {moment(meet.meeting_time).format('DD/MM/YYYY')}
+          </Typography>
+        </Box>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)}>
-        <DialogTitle>Delete Meeting</DialogTitle>
-        <DialogContent>
-          Are you sure you want to delete this meeting?
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
-          <Button onClick={handleDeleteConfirm} color="error">Delete</Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+        {/* Status Chip */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+          <Chip
+            icon={<PendingIcon sx={{ fontSize: '1rem !important' }} />}
+            label={meet.status === 1 ? "Completed" : "Pending"}
+            size="small"
+            sx={{
+              backgroundColor: meet.status === 1 
+                ? alpha(theme.palette.success.main, 0.1)
+                : alpha(theme.palette.warning.main, 0.1),
+              color: meet.status === 1 
+                ? theme.palette.success.main 
+                : theme.palette.warning.main,
+              fontWeight: 500,
+              fontSize: '0.75rem',
+              '& .MuiChip-icon': {
+                color: 'inherit'
+              }
+            }}
+          />
+          <Typography 
+            variant="caption" 
+            color="text.secondary"
+            sx={{ 
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5
+            }}
+          >
+            {moment(meet.meeting_time).fromNow()}
+          </Typography>
+        </Box>
+
+        {/* Description/Agenda */}
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{
+            mb: 2,
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+            flex: 1
+          }}
+        >
+          {meet.agenda || 'No agenda set'}
+        </Typography>
+
+        {/* Attendees */}
+        {meet.attendees && (
+          <Box sx={{ 
+            pt: 2,
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}>
+            <AvatarGroup 
+              max={3}
+              sx={{
+                '& .MuiAvatar-root': {
+                  width: 28,
+                  height: 28,
+                  fontSize: '0.875rem',
+                  borderColor: 'background.paper'
+                }
+              }}
+            >
+              {meet.attendees.split(',')
+                .filter(attendee => attendee && attendee.trim())
+                .map((attendee, index) => {
+                  const trimmedAttendee = attendee.trim();
+                  const initial = trimmedAttendee ? trimmedAttendee[0].toUpperCase() : '?';
+                  
+                  return (
+                    <Avatar 
+                      key={index}
+                      sx={{ 
+                        bgcolor: theme => `${theme.palette.primary.main}${index % 2 ? '99' : 'CC'}`
+                      }}
+                    >
+                      {initial}
+                    </Avatar>
+                  );
+                })}
+            </AvatarGroup>
+            
+            <Typography 
+              variant="caption" 
+              color="text.secondary"
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5
+              }}
+            >
+              <PeopleAltIcon sx={{ fontSize: '1rem' }} />
+              {meet.attendees.split(',').filter(a => a && a.trim()).length} attendees
+            </Typography>
+          </Box>
+        )}
+      </Box>
+    </MeetCard>
+  );
+
+  // Add view dialog handlers
+  const handleViewOpen = async (meet) => {
+    setSelectedMeet(meet);
+    setViewDialogOpen(true);
+    
+    // Fetch status history if needed
+    fetchStatusHistory(meet.id);
+  };
+
+  const handleViewClose = () => {
+    setViewDialogOpen(false);
+    setSelectedMeet(null);
+    setStatusHistory([]);
+  };
+
+  const fetchStatusHistory = async (meetId) => {
+    try {
+      const response = await axios.get(`${API_URL}/meets-history.php`, {
+        params: { id: meetId },
+      });
+      
+      if (response.data) {
+        setStatusHistory(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching status history:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to fetch status history',
+        severity: 'error'
+      });
+    }
+  };
+
+  // Add showNotification function
+  const showNotification = (title, message, priority = 'medium') => {
+    // Browser notification
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(title, {
+        body: message,
+        icon: '/favicon.ico'
+      });
+    }
+
+    // Web app notification
+    const event = new CustomEvent('todoAction', {
+      detail: {
+        title,
+        message,
+        priority
+      }
+    });
+    window.dispatchEvent(event);
+  };
+
+  // Update the dialog title based on edit mode
+  const renderDialogTitle = () => (
+    <DialogHeader>
+      {editMode ? <EditIcon /> : <AddCircleOutline />}
+      <Typography variant="h6" component="div">
+        {editMode ? 'Edit Meeting' : 'Add New Meeting'}
+      </Typography>
+    </DialogHeader>
+  );
+
+  // Update the dialog submit button
+  const renderSubmitButton = () => (
+    <Button
+      variant="contained"
+      color="primary"
+      onClick={editMode ? handleUpdate : handleAddMeet}
+      startIcon={editMode ? <EditIcon /> : <AddIcon />}
+    >
+      {editMode ? 'Update Meeting' : 'Add Meeting'}
+    </Button>
+  );
+
+  // Add utility functions to reduce code duplication
+  const resetFormAndClose = () => {
+    setEditMode(false);
+    setSelectedMeet(null);
+    setOpenDialog(false);
+    setViewDialogOpen(false);
+    setMeetingTitle('');
+    setMeetingTime(new Date());
+    setMeetLink(defaultMeetLink);
+    setAgenda('');
+    setAttendees('');
+  };
+
+  const showErrorToast = (message) => {
+    const event = new CustomEvent('showToast', {
+      detail: {
+        message: message || 'An error occurred',
+        type: 'error',
+        icon: 'Error'
+      }
+    });
+    window.dispatchEvent(event);
+  };
+
+  // Add event listener for create meet button
+  useEffect(() => {
+    const handleCreateMeetEvent = () => {
+      resetForm();
+      setEditMode(false);
+      setOpenDialog(true);
+    };
+
+    window.addEventListener('openCreateMeet', handleCreateMeetEvent);
+
+    return () => {
+      window.removeEventListener('openCreateMeet', handleCreateMeetEvent);
+    };
+  }, []); // Empty dependency array since we don't need any dependencies
+
+  useEffect(() => {
+    const handleFilter = (event) => {
+      if (event.detail.type === 'dateRange') {
+        setDateRange([event.detail.value.startDate, event.detail.value.endDate]);
+      }
+    };
+
+    window.addEventListener('filterChange', handleFilter);
+    return () => window.removeEventListener('filterChange', handleFilter);
+  }, []);
+
+  return (
+    <ErrorBoundary>
+      <Box sx={{ 
+        p: 3,
+        mt: 8,
+        '& *::before, & *::after': {
+          borderTop: 'none !important',
+          borderBottom: 'none !important'
+        }
+      }}>
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 3,
+          flexWrap: { xs: 'wrap', sm: 'nowrap' },
+          gap: 2
+        }}>
+          <Typography 
+            variant="h5" 
+            component="h1" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center',
+              gap: 1,
+              fontWeight: 500,
+              fontSize: { xs: '1.2rem', sm: '1.5rem' },
+              mt: 3
+            }}
+          >
+            Meet List
+            <Chip 
+              label={meets.length} 
+              color="primary" 
+              size="small"
+              sx={{ 
+                borderRadius: '12px',
+                backgroundColor: 'primary.main',
+                color: 'white',
+                fontWeight: 'bold',
+                fontSize: { xs: '0.8rem', sm: '1rem' },
+              }}
+            />
+          </Typography>
+        </Box>
+
+        {isInitialLoad ? (
+          <LoadingSkeleton />
+        ) : loading ? (
+          <LoadingSkeleton />
+        ) : meets.length === 0 ? (
+          <Fade in={true}>
+            <Paper
+              sx={{
+                p: 4,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 2,
+                bgcolor: 'background.default'
+              }}
+            >
+              <Typography variant="h6" color="text.secondary">
+                No meetings scheduled
+              </Typography>
+              <Typography color="text.secondary" align="center">
+                Start by creating your first meeting
+              </Typography>
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: { xs: 'stretch', sm: 'flex-start' },
+                mb: { xs: 2, sm: 3 },
+                mt: { xs: 1, sm: 2 },
+                mx: { xs: 2, sm: 0 }
+              }}>
+                <AddMeetingButton
+                  onClick={handleOpenDialog}
+                  startIcon={<AddMeetingIcon />}
+                  fullWidth={matches}
+                >
+                  Add New Meeting
+                </AddMeetingButton>
+              </Box>
+            </Paper>
+          </Fade>
+        ) : (
+          <Fade in={true}>
+            <Grid container spacing={2.5} sx={{ mt: 2 }}>
+              {filteredMeets.map((meet) => (
+                <Grid item xs={12} sm={6} md={4} lg={3} key={meet.id}>
+                  {renderMeetCard(meet)}
+                </Grid>
+              ))}
+            </Grid>
+          </Fade>
+        )}
+
+        {/* Add/Edit Meeting Dialog */}
+        <AddMeetingDialog
+          open={openDialog}
+          onClose={() => {
+            handleCloseDialog();
+            setEditMode(false);
+            setSelectedMeet(null);
+          }}
+          fullWidth
+          maxWidth="md"
+          TransitionComponent={Fade}
+        >
+          {renderDialogTitle()}
+          <FormContainer>
+            <Grid container spacing={3}>
+              {/* Meeting Title */}
+              <Grid item xs={12}>
+                <StyledTextField
+                  label="Meeting Title"
+                  required
+                  fullWidth
+                  value={meetingTitle}
+                  onChange={(e) => setMeetingTitle(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <VideocamIcon 
+                          color="primary"
+                          sx={{ 
+                            opacity: 0.8,
+                            transition: 'opacity 0.2s',
+                            '&:hover': { opacity: 1 }
+                          }} 
+                        />
+                      </InputAdornment>
+                    )
+                  }}
+                  placeholder="Enter meeting title"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: 'divider',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: 'primary.main',
+                      },
+                    },
+                    mb: { xs: 1, sm: 2 }
+                  }}
+                />
+                {/* Optional helper text */}
+                <Typography 
+                  variant="caption" 
+                  color="text.secondary"
+                  sx={{ 
+                    display: 'block', 
+                    mt: 0.5,
+                    ml: 1,
+                    fontSize: { xs: '0.7rem', sm: '0.75rem' }
+                  }}
+                >
+                  Give your meeting a clear and descriptive title
+                </Typography>
+              </Grid>
+
+              {/* Meeting Time */}
+              <Grid item xs={12} sm={6}>
+                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                  <DateTimePicker
+                    label="Meeting Time"
+                    value={meetingTime}
+                    onChange={(newValue) => setMeetingTime(newValue)}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        required
+                        fullWidth
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: '12px'
+                          }
+                        }}
+                      />
+                    )}
+                  />
+                </LocalizationProvider>
+              </Grid>
+
+              {/* Meet Link */}
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Meet Link"
+                  required
+                  fullWidth
+                  value={meetLink}
+                  onChange={(e) => setMeetLink(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <LinkIcon color="primary" />
+                      </InputAdornment>
+                    )
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '12px'
+                    }
+                  }}
+                />
+              </Grid>
+
+              {/* Agenda */}
+              <Grid item xs={12}>
+                <TextField
+                  label="Agenda"
+                  multiline
+                  rows={4}
+                  fullWidth
+                  value={agenda}
+                  onChange={(e) => setAgenda(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 1.5 }}>
+                        <AssignmentIcon color="primary" />
+                      </InputAdornment>
+                    )
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '12px'
+                    }
+                  }}
+                />
+              </Grid>
+
+              {/* Attendees */}
+              <Grid item xs={12}>
+                <Autocomplete
+                  multiple
+                  freeSolo
+                  options={suggestedAttendees}
+                  getOptionLabel={(option) => 
+                    typeof option === 'string' ? option : option.email
+                  }
+                  value={attendees.split(',').filter(a => a.trim())}
+                  onChange={(_, newValue) => {
+                    setAttendees(
+                      newValue
+                        .map(v => typeof v === 'string' ? v : v.email)
+                        .join(', ')
+                    )
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Attendees"
+                      placeholder="Enter email addresses"
+                      InputProps={{
+                        ...params.InputProps,
+                        startAdornment: (
+                          <>
+                            <InputAdornment position="start">
+                              <PeopleAltIcon color="primary" />
+                            </InputAdornment>
+                            {params.InputProps.startAdornment}
+                          </>
+                        )
+                      }}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '12px'
+                        }
+                      }}
+                    />
+                  )}
+                  renderOption={(props, option, state) => {
+                    // Remove the key from props and pass it directly to li
+                    const { key, ...otherProps } = props;
+                    return (
+                      <li key={key} {...otherProps}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Avatar
+                            sx={{
+                              width: 24,
+                              height: 24,
+                              bgcolor: typeof option === 'string' ? 'primary.main' : option.color
+                            }}
+                          >
+                            {typeof option === 'string' 
+                              ? option[0].toUpperCase()
+                              : option.name[0].toUpperCase()
+                            }
+                          </Avatar>
+                          <Box>
+                            {typeof option === 'string' ? option : (
+                              <>
+                                <Typography variant="body2">{option.name}</Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {option.email}
+                                </Typography>
+                              </>
+                            )}
+                          </Box>
+                        </Box>
+                      </li>
+                    );
+                  }}
+                  renderTags={(value, getTagProps) =>
+                    value.map((option, index) => {
+                      const { key, ...tagProps } = getTagProps({ index });
+                      return (
+                        <Chip
+                          key={key}
+                          {...tagProps}
+                          label={option}
+                          size="small"
+                          avatar={
+                            <Avatar sx={{ bgcolor: 'primary.main' }}>
+                              {option[0].toUpperCase()}
+                            </Avatar>
+                          }
+                          sx={{
+                            borderRadius: '8px',
+                            '& .MuiChip-label': {
+                              px: 1
+                            }
+                          }}
+                        />
+                      );
+                    })
+                  }
+                />
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                  Enter email addresses separated by commas
+                </Typography>
+              </Grid>
+            </Grid>
+          </FormContainer>
+
+          <DialogActions>
+            <Button onClick={handleCloseDialog}>Cancel</Button>
+            {renderSubmitButton()}
+          </DialogActions>
+        </AddMeetingDialog>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog 
+          open={deleteConfirmOpen} 
+          onClose={() => setDeleteConfirmOpen(false)}
+          maxWidth="xs"
+          fullWidth
+          TransitionComponent={Fade}
+          transitionDuration={300}
+          PaperProps={{
+            elevation: 0,
+            sx: {
+              borderRadius: '12px',
+              overflow: 'hidden'
+            }
+          }}
+        >
+          <DialogTitle sx={{
+            bgcolor: '#dc3545',
+            color: 'white',
+            py: 2,
+            px: 3,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            fontSize: '1.1rem',
+            fontWeight: 500
+          }}>
+            <DeleteIcon fontSize="small" />
+            Delete Meeting
+          </DialogTitle>
+          
+          <DialogContent sx={{ p: 3 }}>
+            <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
+              Are you sure you want to delete this meeting?
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              This action cannot be undone.
+            </Typography>
+          </DialogContent>
+          
+          <DialogActions sx={{ 
+            px: 3, 
+            pb: 3,
+            gap: 1
+          }}>
+            <Button 
+              onClick={() => setDeleteConfirmOpen(false)}
+              variant="outlined"
+              sx={{
+                borderRadius: '8px',
+                textTransform: 'none',
+                px: 3,
+                py: 1,
+                color: 'text.primary',
+                borderColor: 'divider',
+                '&:hover': {
+                  borderColor: 'text.primary',
+                  bgcolor: 'action.hover'
+                }
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleDeleteConfirm}
+              variant="contained"
+              color="error"
+              startIcon={<DeleteIcon />}
+              sx={{
+                borderRadius: '8px',
+                textTransform: 'none',
+                px: 3,
+                py: 1,
+                bgcolor: '#dc3545',
+                '&:hover': {
+                  bgcolor: '#c82333'
+                }
+              }}
+            >
+              Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {renderViewDialog()}
+      </Box>
+    </ErrorBoundary>
   );
 };
 

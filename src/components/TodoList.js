@@ -47,6 +47,9 @@ import {
   AccessTime as AccessTimeIcon,
   AssignmentTurnedIn as AssignmentTurnedInIcon,
   Pending as PendingIcon,
+  AddTask as AddTaskIcon,
+  Title as TitleIcon,
+  Description as DescriptionIcon,
 } from '@mui/icons-material';
 import axios from 'axios';
 import moment from 'moment';
@@ -185,6 +188,8 @@ const TodoList = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 600);
 
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  const [dateRange, setDateRange] = useState([null, null]);
 
   const priorityColors = {
     low: theme.palette.success.main,
@@ -440,35 +445,61 @@ const TodoList = () => {
   };
 
   const filteredTodos = useMemo(() => {
-    console.log('Filtering with:', { searchQuery, activeFilters }); // Debug log
-    let filtered = [...todos];
+    // Guard clause for when todos is undefined or null
+    if (!todos) return [];
+    
+    // Guard clause for when activeFilters is undefined
+    if (!activeFilters) return todos;
+
+    let filtered = todos.filter(todo => {
+      // Skip any null or undefined todos
+      if (!todo) return false;
+      // Ensure todo has required properties
+      return typeof todo === 'object' && todo.hasOwnProperty('priority');
+    });
 
     // Search filter
     if (searchQuery) {
       filtered = filtered.filter(todo =>
-        todo.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        todo.description.toLowerCase().includes(searchQuery.toLowerCase())
+        (todo?.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (todo?.description || '').toLowerCase().includes(searchQuery.toLowerCase())
       );
+    }
+
+    // Date range filter
+    if (dateRange[0] && dateRange[1]) {
+      filtered = filtered.filter(todo => {
+        if (!todo?.due_date) return false;
+        const todoDate = new Date(todo.due_date);
+        const startDate = new Date(dateRange[0]);
+        const endDate = new Date(dateRange[1]);
+        startDate.setHours(0, 0, 0, 0);
+        endDate.setHours(23, 59, 59, 999);
+        return todoDate >= startDate && todoDate <= endDate;
+      });
     }
 
     // Priority filter
-    if (activeFilters.priority !== 'all') {
-      filtered = filtered.filter(todo =>
-        todo.priority.toLowerCase() === activeFilters.priority.toLowerCase()
-      );
+    if (activeFilters?.priority && activeFilters.priority !== 'all') {
+      filtered = filtered.filter(todo => {
+        if (!todo?.priority) return false;
+        return todo.priority.toLowerCase() === activeFilters.priority.toLowerCase();
+      });
     }
 
     // Status filter
-    if (activeFilters.status !== 'all') {
-      filtered = filtered.filter(todo =>
-        todo.status.toLowerCase() === activeFilters.status.toLowerCase()
-      );
+    if (activeFilters?.status && activeFilters.status !== 'all') {
+      filtered = filtered.filter(todo => {
+        if (!todo?.status) return false;
+        return todo.status.toLowerCase() === activeFilters.status.toLowerCase();
+      });
     }
 
     // Time frame filter
-    if (activeFilters.timeFrame !== 'all') {
+    if (activeFilters?.timeFrame && activeFilters.timeFrame !== 'all') {
       const now = moment();
       filtered = filtered.filter(todo => {
+        if (!todo?.due_date || !todo?.status) return false;
         const dueDate = moment(todo.due_date);
         switch (activeFilters.timeFrame) {
           case 'today':
@@ -484,7 +515,7 @@ const TodoList = () => {
     }
 
     return filtered;
-  }, [todos, searchQuery, activeFilters]);
+  }, [todos, searchQuery, dateRange, activeFilters]);
 
   useEffect(() => {
     const handleSearch = (event) => {
@@ -493,8 +524,16 @@ const TodoList = () => {
     };
 
     const handleFilter = (event) => {
-      console.log('Filter event received:', event.detail.filters);
-      setActiveFilters(event.detail.filters);
+      if (!event.detail) return; // Guard against undefined event detail
+      
+      if (event.detail.type === 'dateRange') {
+        setDateRange([event.detail.value.startDate, event.detail.value.endDate]);
+      } else {
+        setActiveFilters(prev => ({
+          ...prev,
+          ...event.detail.filters
+        }));
+      }
     };
 
     // Add handler for clear all
@@ -517,6 +556,17 @@ const TodoList = () => {
       window.removeEventListener('filterChange', handleFilter);
       window.removeEventListener('clearAllFilters', handleClearAll);  // Clean up
     };
+  }, []);
+
+  useEffect(() => {
+    const handleFilter = (event) => {
+      if (event.detail.type === 'dateRange') {
+        setDateRange([event.detail.value.startDate, event.detail.value.endDate]);
+      }
+    };
+
+    window.addEventListener('filterChange', handleFilter);
+    return () => window.removeEventListener('filterChange', handleFilter);
   }, []);
 
   const handleSortChange = (option) => {
@@ -923,974 +973,1012 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
     </CustomGrid>
   );
 
-  return (
-    <Box sx={{
-      p: 3,
-      mt: 8  // Add margin top to create space below navbar
-    }}>
-      <Box sx={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        mb: 3,
-        flexWrap: { xs: 'wrap', sm: 'nowrap' },
-        gap: 2
-      }}>
-        <Typography
-          variant="h5"
-          component="h1"
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            fontWeight: 500,
-            fontSize: { xs: '1.2rem', sm: '1.5rem' },
-            mt: 3
-          }}
-        >
-              Todo List
-          <Chip
-            label={todos.length}
-            color="primary"
-            size="small"
-            sx={{
-              borderRadius: '12px',
-              backgroundColor: 'primary.main',
-              color: 'white',
-              fontWeight: 'bold',
-              fontSize: { xs: '0.8rem', sm: '1rem' },
-            }}
-          />
-            </Typography>
-      </Box>
+  const CreateTodoDialog = ({ open, onClose }) => {
+    // Set default values when dialog opens
+    const getDefaultFormData = () => {
+      const now = new Date();
+      const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000); // Add exactly 24 hours in milliseconds
+      
+      // Format: YYYY-MM-DDTHH:mm
+      const formattedDateTime = tomorrow.toISOString().slice(0, 16);
+      
+      return {
+        title: '',
+        description: '',
+        priority: 'medium', // Default priority
+        due_date: formattedDateTime
+      };
+    };
 
-      {isInitialLoad ? (
-        <LoadingSkeleton />
-      ) : loading ? (
-        <LoadingSkeleton />
-      ) : todos.length === 0 ? (
-        <Fade in={true}>
-          <Paper
-            sx={{
-              p: 4,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 2,
-              bgcolor: 'background.default'
-            }}
-          >
-            <Typography variant="h6" color="text.secondary">
-              No todos found matching your criteria
-            </Typography>
-            <Button
-              variant="contained"
-              onClick={() => setOpen(true)}
-              startIcon={<AddIcon />}
-              sx={{
-                textTransform: 'none',
-                borderRadius: 20,
-                px: 3
-              }}
-            >
-              Create Todo
-            </Button>
-          </Paper>
-        </Fade>
-      ) : (
-        <Fade in={true}>
-          <CustomGrid container spacing={2}>
-            {filteredTodos.map((todo) => (
-              <Grid item xs={12} sm={6} md={4} lg={3} key={todo.id}>
-                <TodoItem 
-                  elevation={1}
-                  onClick={() => handleCardClick(todo)}
-                >
-                  <Chip
-                    label={todo.priority}
-                    color={getPriorityColor(todo.priority)}
-                    size={isMobile ? "small" : "medium"}
-                    sx={{
-                      position: 'absolute',
-                      right: 8,
-                      top: 8,
-                      fontWeight: 'bold'
-                    }}
-                  />
+    // Initialize form data with defaults
+    const [formData, setFormData] = useState(getDefaultFormData());
 
-                  <Box sx={{ mb: 2, mt: 1 }}>
-                    <Typography 
-                      variant={isMobile ? "subtitle1" : "h6"}
-                      component="h2"
-                      sx={{ 
-                        fontWeight: 'bold',
-                        mb: 1,
-                        pr: 4, // Space for priority badge
-                        wordBreak: 'break-word'
-                      }}
-                    >
-                      {todo.title}
-                    </Typography>
-                    <Typography 
-                      variant="body2" 
-                      color="text.secondary"
-                      sx={{ 
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                        minHeight: '40px'
-                      }}
-                    >
-                      {todo.description}
-                    </Typography>
-                  </Box>
+    // Reset form with defaults when dialog opens
+    useEffect(() => {
+      if (open) {
+        setFormData(getDefaultFormData());
+      }
+    }, [open]);
 
-                  <Box 
-                    sx={{ 
-                      display: 'flex',
-                      gap: 2,
-                      mb: 2,
-                      flexWrap: 'wrap'
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <CalendarTodayIcon 
-                        fontSize={isMobile ? "small" : "medium"} 
-                        color="action" 
-                      />
-                      <Typography variant="body2">
-                        {moment(todo.due_date).format('DD/MM/YYYY')}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <AccessTimeIcon 
-                        fontSize={isMobile ? "small" : "medium"} 
-                        color="action" 
-                      />
-                      <Typography variant="body2">
-                        {moment(todo.due_date).format('hh:mm A')}
-                      </Typography>
-                    </Box>
-                  </Box>
+    // Handle input changes without causing full re-renders
+    const handleInputChange = (field) => (event) => {
+      setFormData(prev => ({
+        ...prev,
+        [field]: event.target.value
+      }));
+    };
 
-                  <Box 
-                    sx={{ 
-                      mt: 'auto',
-                      pt: 2,
-                      borderTop: '1px solid',
-                      borderColor: 'divider',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      flexWrap: 'wrap',
-                      gap: 1
-                    }}
-                  >
-                    <Chip
-                      icon={todo.status === 'completed' ? <CheckCircleIcon /> : <PendingIcon />}
-                      label={todo.status}
-                      size={isMobile ? "small" : "medium"}
-                      color={todo.status === 'completed' ? 'success' : 'default'}
-                      variant="outlined"
-                      sx={{ 
-                        textTransform: 'capitalize',
-                        minWidth: 90
-                      }}
-                    />
-                    <Typography 
-                      variant="caption" 
-                      color="text.secondary"
-                      sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center',
-                        gap: 0.5
-                      }}
-                    >
-                      <AccessTimeIcon fontSize="inherit" />
-                      {moment(todo.created_at).fromNow()}
-                    </Typography>
-                  </Box>
-                </TodoItem>
-              </Grid>
-            ))}
-          </CustomGrid>
-        </Fade>
-      )}
+    const isValidTodo = () => {
+      return (
+        formData.title?.trim() !== '' && 
+        formData.description?.trim() !== '' && 
+        formData.priority && 
+        formData.due_date
+      );
+    };
 
-      {loading && (
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            minHeight: 300
-          }}
-        >
-          <CircularProgress />
-        </Box>
-      )}
+    const handleCreateTodo = async () => {
+      if (!isValidTodo()) return;
+      
+      try {
+        // Send JSON data instead of FormData
+        const response = await fetch(`${API_URL}/todos.php`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            title: formData.title,
+            description: formData.description,
+            priority: formData.priority,
+            due_date: formData.due_date
+          })
+        });
 
-      <Dialog
-        open={open}
-        onClose={() => setOpen(false)}
-        maxWidth="sm"
-        fullWidth
-        aria-labelledby="create-todo-title"
-        PaperProps={{
-          elevation: 0,
-          sx: {
-            borderRadius: { xs: '12px 12px 0 0', sm: 2 },
-            margin: { xs: 0, sm: 2 },
-            maxHeight: { xs: '100%', sm: '90vh' },
-            position: { xs: 'absolute', sm: 'relative' },
-            bottom: { xs: 0, sm: 'auto' },
-            width: '100%'
-          }
-        }}
-      >
-        <form onSubmit={handleAddTodo}>
-          <DialogTitle 
-            id="create-todo-title"
-            sx={{
-              background: 'linear-gradient(45deg, #00A389 30%, #00BFA6 90%)',
-              color: 'white',
-              p: { xs: 2, sm: 3 },
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 1,
-              '& .MuiTypography-root': {
-                fontSize: { xs: '1.2rem', sm: '1.5rem' },
-                fontWeight: 500
-              }
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <AddIcon aria-hidden="true" /> 
-              <span>Create New Todo</span>
-            </Box>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={loading}
-              aria-label="Create todo"
-              sx={{
-                borderRadius: 2,
-                px: { xs: 2, sm: 3 },
-                py: { xs: 1, sm: 1.5 },
-                textTransform: 'none',
-                fontWeight: 500,
-                bgcolor: 'white',
-                color: 'primary.main',
-                fontSize: { xs: '0.875rem', sm: '1rem' },
-                '&:hover': {
-                  bgcolor: 'rgba(255, 255, 255, 0.9)',
-                }
-              }}
-            >
-              {loading ? (
-                <CircularProgress size={24} sx={{ color: 'primary.main' }} aria-label="Loading" />
-              ) : (
-                'Create Todo'
-              )}
-            </Button>
-          </DialogTitle>
+        const data = await response.json();
+        
+        if (data.message === "Todo created successfully.") {
+          // Show success message
+          showSnackbar('Todo created successfully', 'success');
+          
+          // Reset form
+          setFormData(getDefaultFormData());
+          
+          // Close the dialog
+          onClose();
+          
+          // Refresh todos list
+          await fetchTodos();
+        } else {
+          throw new Error(data.message || 'Failed to create todo');
+        }
+      } catch (error) {
+        console.error('Error creating todo:', error);
+        showSnackbar('Failed to create todo', 'error');
+      }
+    };
 
-          <DialogContent 
-            sx={{ 
-              p: { xs: 2, sm: 3 },
-              height: { xs: 'calc(100vh - 70px)', sm: 'auto' },
-              overflowY: 'auto'
-            }}
-          >
-            <TextField
-              autoFocus
-              fullWidth
-              id="todo-title"
-              label="What needs to be done?"
-              placeholder="Enter a clear and specific task"
-              value={newTodo.title}
-              onChange={(e) => setNewTodo({ ...newTodo, title: e.target.value })}
-              required
-              sx={{ 
-                mb: { xs: 2, sm: 3 },
-                mt: 1,
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2
-                }
-              }}
-              helperText="Be specific about what needs to be accomplished"
-            />
-
-            <TextField
-              fullWidth
-              id="todo-details"
-              label="Additional Details"
-              placeholder="Add any important details or context"
-              multiline
-              rows={4}
-              value={newTodo.description}
-              onChange={(e) => setNewTodo({ ...newTodo, description: e.target.value })}
-              required
-              helperText="Include any relevant information others might need"
-              sx={{
-                mb: { xs: 2, sm: 3 },
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2
-                }
-              }}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end" sx={{ alignSelf: 'flex-start', mt: 1, mr: 1 }}>
-                    <Tooltip title="Generate AI Description">
-                      <IconButton
-                        onClick={() => handleGenerateDescription(newTodo.title)}
-                        disabled={isGeneratingDescription || !newTodo.title}
-                        color="primary"
-                        size="small"
-                        aria-label="Generate AI description"
-                        sx={{
-                          bgcolor: 'background.paper',
-                          '&:hover': {
-                            bgcolor: 'action.hover'
-                          }
-                        }}
-                      >
-                        {isGeneratingDescription ? (
-                          <CircularProgress size={20} aria-label="Generating description" />
-                        ) : (
-                          <AutoFixHighIcon aria-hidden="true" />
-                        )}
-                      </IconButton>
-                    </Tooltip>
-                  </InputAdornment>
-                )
-              }}
-            />
-
-            <TextField
-              select
-              fullWidth
-              id="todo-priority"
-              label="Priority Level"
-              value={newTodo.priority}
-              onChange={(e) => setNewTodo({ ...newTodo, priority: e.target.value })}
-              sx={{ 
-                mb: { xs: 2, sm: 3 },
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2
-                }
-              }}
-              helperText="Select the urgency level of this task"
-            >
-              {priorityOptions.map((option) => (
-                <MenuItem
-                  key={option.value}
-                  value={option.value}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    py: 1.5
-                  }}
-                >
-                  <Box
-                    aria-hidden="true"
-                    sx={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      backgroundColor: option.color,
-                      display: 'inline-block'
-                    }}
-                  />
-                  {option.label}
-                </MenuItem>
-              ))}
-            </TextField>
-
-            <TextField
-              fullWidth
-              id="todo-due-date"
-              type="datetime-local"
-              label="Due Date & Time"
-              InputLabelProps={{ shrink: true }}
-              value={newTodo.due_date}
-              onChange={(e) => setNewTodo({ ...newTodo, due_date: e.target.value })}
-              helperText="When should this task be completed?"
-              sx={{
-                mb: { xs: 2, sm: 3 },
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2
-                }
-              }}
-            />
-          </DialogContent>
-        </form>
-      </Dialog>
-
-      <Dialog
-        open={editDialogOpen}
-        onClose={() => setEditDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-        aria-labelledby="edit-todo-title"
-        PaperProps={{
-          elevation: 0,
-          sx: {
-            borderRadius: { xs: '12px 12px 0 0', sm: 2 },
-            margin: { xs: 0, sm: 2 },
-            maxHeight: { xs: '100%', sm: '90vh' },
-            position: { xs: 'absolute', sm: 'relative' },
-            bottom: { xs: 0, sm: 'auto' },
-            width: '100%'
-          }
-        }}
-      >
-        <form onSubmit={handleEditSubmit}>
-          <DialogTitle 
-            id="edit-todo-title"
-            sx={{
-              background: 'linear-gradient(45deg, #00A389 30%, #00BFA6 90%)',
-              color: 'white',
-              p: { xs: 2, sm: 3 },
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 1,
-              '& .MuiTypography-root': {
-                fontSize: { xs: '1.2rem', sm: '1.5rem' },
-                fontWeight: 500
-              }
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <EditIcon aria-hidden="true" />
-              <span>Edit Todo</span>
-            </Box>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={loading}
-              aria-label="Save changes"
-              sx={{
-                borderRadius: 2,
-                px: { xs: 2, sm: 3 },
-                py: { xs: 1, sm: 1.5 },
-                textTransform: 'none',
-                fontWeight: 500,
-                bgcolor: 'white',
-                color: 'primary.main',
-                fontSize: { xs: '0.875rem', sm: '1rem' },
-                '&:hover': {
-                  bgcolor: 'rgba(255, 255, 255, 0.9)',
-                }
-              }}
-            >
-              {loading ? (
-                <CircularProgress size={24} sx={{ color: 'primary.main' }} aria-label="Loading" />
-              ) : (
-                'Save Changes'
-              )}
-            </Button>
-          </DialogTitle>
-
-          <DialogContent 
-            sx={{ 
-              p: { xs: 2, sm: 3 },
-              height: { xs: 'calc(100vh - 70px)', sm: 'auto' },
-              overflowY: 'auto'
-            }}
-          >
-            <TextField
-              autoFocus
-              fullWidth
-              id="edit-todo-title"
-              label="Title"
-              placeholder="Enter a clear and specific task"
-              value={editTodo?.title || ''}
-              onChange={(e) => setEditTodo({ ...editTodo, title: e.target.value })}
-              required
-              sx={{ 
-                mb: { xs: 2, sm: 3 },
-                mt: 1,
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2
-                }
-              }}
-              helperText="Be specific about what needs to be accomplished"
-            />
-
-            <TextField
-              fullWidth
-              id="edit-todo-details"
-              label="Description"
-              placeholder="Add any important details or context"
-              multiline
-              rows={4}
-              value={editTodo?.description || ''}
-              onChange={(e) => setEditTodo({ ...editTodo, description: e.target.value })}
-              required
-              helperText="Include any relevant information others might need"
-              sx={{
-                mb: { xs: 2, sm: 3 },
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2
-                }
-              }}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end" sx={{ alignSelf: 'flex-start', mt: 1, mr: 1 }}>
-                    <Tooltip title="Generate AI Description">
-                      <IconButton
-                        onClick={() => handleGenerateDescription(editTodo?.title)}
-                        disabled={isGeneratingDescription || !editTodo?.title}
-                        color="primary"
-                        size="small"
-                        aria-label="Generate AI description"
-                        sx={{
-                          bgcolor: 'background.paper',
-                          '&:hover': {
-                            bgcolor: 'action.hover'
-                          }
-                        }}
-                      >
-                        {isGeneratingDescription ? (
-                          <CircularProgress size={20} aria-label="Generating description" />
-                        ) : (
-                          <AutoFixHighIcon aria-hidden="true" />
-                        )}
-                      </IconButton>
-                    </Tooltip>
-                  </InputAdornment>
-                )
-              }}
-            />
-
-            <TextField
-              select
-              fullWidth
-              id="edit-todo-priority"
-              label="Priority"
-              value={editTodo?.priority || 'medium'}
-              onChange={(e) => setEditTodo({ ...editTodo, priority: e.target.value })}
-              sx={{ 
-                mb: { xs: 2, sm: 3 },
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2
-                }
-              }}
-              helperText="Select the urgency level of this task"
-            >
-              {priorityOptions.map((option) => (
-                <MenuItem
-                  key={option.value}
-                  value={option.value}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    py: 1.5
-                  }}
-                >
-                  <Box
-                    aria-hidden="true"
-                    sx={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      backgroundColor: option.color,
-                      display: 'inline-block'
-                    }}
-                  />
-                  {option.label}
-                </MenuItem>
-              ))}
-            </TextField>
-
-            <TextField
-              fullWidth
-              id="edit-todo-due-date"
-              type="datetime-local"
-              label="Due Date"
-              value={editTodo?.due_date || ''}
-              onChange={(e) => setEditTodo({ ...editTodo, due_date: e.target.value })}
-              InputLabelProps={{ shrink: true }}
-              helperText="When should this task be completed?"
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2
-                }
-              }}
-            />
-          </DialogContent>
-        </form>
-      </Dialog>
-
-      <DeleteDialog
-        open={deleteDialogOpen}
+    return (
+      <Dialog 
+        open={open} 
         onClose={() => {
-          setDeleteDialogOpen(false);
-          setTodoToDelete(null);
+          setFormData(getDefaultFormData()); // Reset form on close
+          onClose();
         }}
-        onConfirm={handleConfirmDelete}
-        todoTitle={todoToDelete?.title || ''}
-      />
-
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'center'
-        }}
-        sx={{
-          bottom: { xs: 16, sm: 24 }
-        }}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{
-            width: '100%',
-            maxWidth: { xs: '100%', sm: 400 }
-          }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-
-      <Dialog
-        open={detailsDialog && selectedTodo !== null} 
-        onClose={() => {
-          setDetailsDialog(false);
-          setSelectedTodo(null);
-        }}
-        maxWidth="md"
-        fullWidth
-      >
-        {selectedTodo && (
-          <>
-            <DialogTitle sx={{ 
-              borderBottom: '1px solid',
-              borderColor: 'divider',
-                bgcolor: selectedTodo.status === 'completed' ? 'success.main' : 'primary.main',
-                color: 'white',
-                display: 'flex',
-              justifyContent: 'space-between',
-                alignItems: 'center',
-              transition: 'background-color 0.3s ease'
-            }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                {selectedTodo.status === 'completed' ? 
-                  <CheckCircleIcon /> : 
-                  <PendingIcon />
-                }
-                Todo Details
-              </Box>
-              <Chip 
-                label={selectedTodo.status.toUpperCase()}
-                color={selectedTodo.status === 'completed' ? 'success' : 'default'}
-                sx={{ 
-                  fontWeight: 'bold',
-                  bgcolor: 'white',
-                  '& .MuiChip-label': { px: 2 }
-                }}
-              />
-            </DialogTitle>
-            <DialogContent sx={{ mt: 2 }}>
-              {/* Todo Details Card */}
-              <Paper elevation={0} variant="outlined" sx={{ p: 2, mb: 3 }}>
-                <Typography variant="h6" color="primary.main" gutterBottom>
-                  {selectedTodo.title}
-                </Typography>
-                <Typography color="text.secondary" sx={{ mb: 2 }}>
-                  {selectedTodo.description}
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                      <CalendarTodayIcon color="action" fontSize="small" />
-                      <Typography variant="body2">
-                        Due: {moment(selectedTodo.due_date).format('DD/MM/YYYY')}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <AccessTimeIcon color="action" fontSize="small" />
-                      <Typography variant="body2">
-                        Time: {moment(selectedTodo.due_date).format('hh:mm A')}
-                  </Typography>
-                </Box>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                      <FlagIcon color="action" fontSize="small" />
-                      <Typography variant="body2">
-                        Priority: {selectedTodo.priority.toUpperCase()}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <AssignmentTurnedInIcon color="action" fontSize="small" />
-                      <Typography variant="body2">
-                        Current Status: {selectedTodo.status.toUpperCase()}
-                  </Typography>
-                </Box>
-                  </Grid>
-                </Grid>
-              </Paper>
-
-              {/* Status History Timeline */}
-              {statusHistory && statusHistory.length > 0 && (
-              <Box sx={{ mt: 4 }}>
-                  <Typography variant="h6" gutterBottom sx={{ color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <HistoryIcon /> Status History
-                </Typography>
-                  <Timeline position="alternate">
-                    {statusHistory.map((history, index) => (
-                      <TimelineItem key={index}>
-                        <TimelineOppositeContent color="text.secondary">
-                          {moment(history.updated_at).format('DD/MM/YYYY hh:mm A')}
-                        </TimelineOppositeContent>
-                        <TimelineSeparator>
-                          <TimelineDot 
-                            color={history.status === 'completed' ? 'success' : 'primary'}
-                            variant={index === 0 ? 'filled' : 'outlined'}
-                          >
-                            {history.status === 'completed' ? 
-                              <CheckCircleIcon fontSize="small" /> : 
-                              <PendingIcon fontSize="small" />
-                            }
-                          </TimelineDot>
-                          {index < statusHistory.length - 1 && <TimelineConnector />}
-                        </TimelineSeparator>
-                        <TimelineContent>
-                          <Paper elevation={0} variant="outlined" sx={{ 
-                            p: 2,
-                            bgcolor: index === 0 ? 'action.hover' : 'transparent'
-                          }}>
-                            <Typography variant="subtitle2" color="text.primary">
-                              Status changed to: <strong>{history.status.toUpperCase()}</strong>
-                          </Typography>
-                            {history.remarks && (
-                              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                                "{history.remarks}"
-                              </Typography>
-                            )}
-                          </Paper>
-                        </TimelineContent>
-                      </TimelineItem>
-                    ))}
-                  </Timeline>
-                </Box>
-                )}
-            </DialogContent>
-            <DialogActions 
-              sx={{ 
-                p: 2, 
-                borderTop: '1px solid', 
-                borderColor: 'divider',
-                bgcolor: 'grey.50',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'stretch'
-              }}
-            >
-              <ActionButtons todo={selectedTodo} isMobile={isMobile} />
-            </DialogActions>
-          </>
-        )}
-      </Dialog>
-
-      <Dialog
-        open={openDialog}
-        onClose={() => setOpenDialog(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <form onSubmit={handleEditSubmit}>
-          <DialogTitle sx={{
-            borderBottom: '1px solid',
-            borderColor: 'divider',
-            bgcolor: 'primary.main',
-            color: 'white',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            px: 3,
-            py: 2,
-            borderRadius: '8px 8px 0 0'
-          }}>
-            <Typography variant="h6" component="div">
-              Edit Todo
-            </Typography>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={loading}
-              sx={{
-                bgcolor: 'white',
-                color: 'primary.main',
-                '&:hover': {
-                  bgcolor: 'primary.dark'
-                }
-              }}
-            >
-              {loading ? <CircularProgress size={24} /> : 'Save Changes'}
-            </Button>
-          </DialogTitle>
-          <DialogContent sx={{ pt: 2, mt: 2 }}>
-            <TextField
-              fullWidth
-              id="edit-todo-title"
-              label="Title"
-              value={editTodo?.title || ''}
-              onChange={(e) => setEditTodo({ ...editTodo, title: e.target.value })}
-              required
-              sx={{ mb: 2, mt: 2, borderRadius: 2 }}
-            />
-            <TextField
-              fullWidth
-              id="edit-todo-details"
-              label="Description"
-              placeholder="Add any important details or context"
-              multiline
-              rows={4}
-              value={editTodo?.description || ''}
-              onChange={(e) => setEditTodo({ ...editTodo, description: e.target.value })}
-              required
-              helperText="Include any relevant information others might need"
-              sx={{
-                mb: { xs: 2, sm: 3 },
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2
-                }
-              }}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end" sx={{ alignSelf: 'flex-start', mt: 1, mr: 1 }}>
-                    <Tooltip title="Generate AI Description">
-                      <IconButton
-                        onClick={() => handleGenerateDescription(editTodo?.title)}
-                        disabled={isGeneratingDescription || !editTodo?.title}
-                        color="primary"
-                        size="small"
-                        aria-label="Generate AI description"
-                        sx={{
-                          bgcolor: 'background.paper',
-                          '&:hover': {
-                            bgcolor: 'action.hover'
-                          }
-                        }}
-                      >
-                        {isGeneratingDescription ? (
-                          <CircularProgress size={20} aria-label="Generating description" />
-                        ) : (
-                          <AutoFixHighIcon aria-hidden="true" />
-                        )}
-                      </IconButton>
-                    </Tooltip>
-                  </InputAdornment>
-                )
-              }}
-            />
-            <TextField
-              select
-              fullWidth
-              id="edit-todo-priority"
-              label="Priority"
-              value={editTodo?.priority || 'medium'}
-              onChange={(e) => setEditTodo({ ...editTodo, priority: e.target.value })}
-              sx={{ mb: 2, borderRadius: 2 }}
-            >
-              {priorityOptions.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </TextField>
-            <TextField
-              fullWidth
-              id="edit-todo-due-date"
-              label="Due Date"
-              type="datetime-local"
-              value={editTodo?.due_date || ''}
-              onChange={(e) => setEditTodo({ ...editTodo, due_date: e.target.value })}
-              InputLabelProps={{ shrink: true }}
-              sx={{ borderRadius: 2 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <CalendarTodayIcon />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <AccessTimeIcon />
-                  </InputAdornment>
-                )
-              }}
-            />
-          </DialogContent>
-        </form>
-      </Dialog>
-
-      <Dialog
-        open={statusUpdateDialog}
-        onClose={() => setStatusUpdateDialog(false)}
         maxWidth="sm"
         fullWidth
       >
         <DialogTitle sx={{ 
           bgcolor: 'primary.main',
-          color: 'white'
+          color: 'white',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          px: 3,
+          py: 2
         }}>
-          Update Todo Status
+          <AddTaskIcon />
+          Add New Todo
         </DialogTitle>
-        <DialogContent sx={{ mt: 2, pb: 1 }}>
-          {todoToUpdate && (
-            <>
-              <Typography variant="subtitle1" gutterBottom>
-                Are you sure you want to mark this todo as {todoToUpdate.status === 'completed' ? 'pending' : 'completed'}?
-              </Typography>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
-                Todo: {todoToUpdate.title}
-              </Typography>
+
+        <DialogContent sx={{ mt: 2, px: 3, py: 2 }}>
           <TextField
-                fullWidth
-                multiline
-                rows={3}
-                label="Add remarks (optional)"
-            value={statusRemarks}
-            onChange={(e) => setStatusRemarks(e.target.value)}
-            margin="normal"
-                variant="outlined"
-                placeholder="Enter any additional notes about this status change..."
+            fullWidth
+            required
+            label="Title"
+            placeholder="Enter todo title"
+            value={formData.title}
+            onChange={handleInputChange('title')}
+            sx={{ mb: 3 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <TitleIcon sx={{ color: 'text.secondary' }} />
+                </InputAdornment>
+              ),
+            }}
           />
-            </>
-          )}
+
+          <TextField
+            fullWidth
+            required
+            multiline
+            rows={4}
+            label="Description"
+            placeholder="Add any important details or context"
+            value={formData.description}
+            onChange={handleInputChange('description')}
+            sx={{ mb: 3 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 2 }}>
+                  <DescriptionIcon sx={{ color: 'text.secondary' }} />
+                </InputAdornment>
+              ),
+            }}
+          />
+
+          <TextField
+            select
+            fullWidth
+            required
+            label="Priority"
+            value={formData.priority}
+            onChange={handleInputChange('priority')}
+            sx={{ mb: 3 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <FlagIcon sx={{ color: 'text.secondary' }} />
+                </InputAdornment>
+              ),
+            }}
+          >
+            {priorityOptions.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box
+                    sx={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      bgcolor: option.color
+                    }}
+                  />
+                  {option.label}
+                </Box>
+              </MenuItem>
+            ))}
+          </TextField>
+
+          <TextField
+            fullWidth
+            required
+            type="datetime-local"
+            label="Due Date"
+            value={formData.due_date}
+            onChange={handleInputChange('due_date')}
+            InputLabelProps={{ shrink: true }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <CalendarTodayIcon sx={{ color: 'text.secondary' }} />
+                </InputAdornment>
+              ),
+            }}
+          />
         </DialogContent>
-        <DialogActions sx={{ p: 2, gap: 1 }}>
+
+        <DialogActions sx={{ 
+          px: 3, 
+          py: 2,
+          gap: 1
+        }}>
           <Button
-            onClick={() => setStatusUpdateDialog(false)}
             variant="outlined"
-            color="inherit"
+            onClick={onClose}
+            sx={{ flex: 1 }}
           >
             Cancel
           </Button>
           <Button
-            onClick={handleStatusUpdate}
             variant="contained"
-            color="primary"
-            startIcon={<CheckCircleIcon />}
+            onClick={handleCreateTodo}
+            disabled={!isValidTodo()}
+            sx={{ 
+              flex: 1,
+              bgcolor: 'success.main',
+              '&:hover': {
+                bgcolor: 'success.dark'
+              }
+            }}
           >
-            Confirm Status Change
+            Add Todo
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
-  );
+    );
+  };
+
+  try {
+    return (
+      <Box sx={{
+        p: 3,
+        mt: 8  // Add margin top to create space below navbar
+      }}>
+        <Box sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 3,
+          flexWrap: { xs: 'wrap', sm: 'nowrap' },
+          gap: 2
+        }}>
+          <Typography
+            variant="h5"
+            component="h1"
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              fontWeight: 500,
+              fontSize: { xs: '1.2rem', sm: '1.5rem' },
+              mt: 3
+            }}
+          >
+                Todo List
+            <Chip
+              label={todos.length}
+              color="primary"
+              size="small"
+              sx={{
+                borderRadius: '12px',
+                backgroundColor: 'primary.main',
+                color: 'white',
+                fontWeight: 'bold',
+                fontSize: { xs: '0.8rem', sm: '1rem' },
+              }}
+            />
+              </Typography>
+        </Box>
+
+        {isInitialLoad ? (
+          <LoadingSkeleton />
+        ) : loading ? (
+          <LoadingSkeleton />
+        ) : todos.length === 0 ? (
+          <Fade in={true}>
+            <Paper
+              sx={{
+                p: 4,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 2,
+                bgcolor: 'background.default'
+              }}
+            >
+              <Typography variant="h6" color="text.secondary">
+                No todos found matching your criteria
+              </Typography>
+              <Button
+                variant="contained"
+                onClick={() => setOpen(true)}
+                startIcon={<AddIcon />}
+                sx={{
+                  textTransform: 'none',
+                  borderRadius: 20,
+                  px: 3
+                }}
+              >
+                Create Todo
+              </Button>
+            </Paper>
+          </Fade>
+        ) : (
+          <Fade in={true}>
+            <CustomGrid container spacing={2}>
+              {filteredTodos.map((todo) => (
+                <Grid item xs={12} sm={6} md={4} lg={3} key={todo.id}>
+                  <TodoItem 
+                    elevation={1}
+                    onClick={() => handleCardClick(todo)}
+                  >
+                    <Chip
+                      label={todo.priority}
+                      color={getPriorityColor(todo.priority)}
+                      size={isMobile ? "small" : "medium"}
+                      sx={{
+                        position: 'absolute',
+                        right: 8,
+                        top: 8,
+                        fontWeight: 'bold'
+                      }}
+                    />
+
+                    <Box sx={{ mb: 2, mt: 1 }}>
+                      <Typography 
+                        variant={isMobile ? "subtitle1" : "h6"}
+                        component="h2"
+                        sx={{ 
+                          fontWeight: 'bold',
+                          mb: 1,
+                          pr: 4, // Space for priority badge
+                          wordBreak: 'break-word'
+                        }}
+                      >
+                        {todo.title}
+                      </Typography>
+                      <Typography 
+                        variant="body2" 
+                        color="text.secondary"
+                        sx={{ 
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          minHeight: '40px'
+                        }}
+                      >
+                        {todo.description}
+                      </Typography>
+                    </Box>
+
+                    <Box 
+                      sx={{ 
+                        display: 'flex',
+                        gap: 2,
+                        mb: 2,
+                        flexWrap: 'wrap'
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <CalendarTodayIcon 
+                          fontSize={isMobile ? "small" : "medium"} 
+                          color="action" 
+                        />
+                        <Typography variant="body2">
+                          {moment(todo.due_date).format('DD/MM/YYYY')}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <AccessTimeIcon 
+                          fontSize={isMobile ? "small" : "medium"} 
+                          color="action" 
+                        />
+                        <Typography variant="body2">
+                          {moment(todo.due_date).format('hh:mm A')}
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    <Box 
+                      sx={{ 
+                        mt: 'auto',
+                        pt: 2,
+                        borderTop: '1px solid',
+                        borderColor: 'divider',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                        gap: 1
+                      }}
+                    >
+                      <Chip
+                        icon={todo.status === 'completed' ? <CheckCircleIcon /> : <PendingIcon />}
+                        label={todo.status}
+                        size={isMobile ? "small" : "medium"}
+                        color={todo.status === 'completed' ? 'success' : 'default'}
+                        variant="outlined"
+                        sx={{ 
+                          textTransform: 'capitalize',
+                          minWidth: 90
+                        }}
+                      />
+                      <Typography 
+                        variant="caption" 
+                        color="text.secondary"
+                        sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center',
+                          gap: 0.5
+                        }}
+                      >
+                        <AccessTimeIcon fontSize="inherit" />
+                        {moment(todo.created_at).fromNow()}
+                      </Typography>
+                    </Box>
+                  </TodoItem>
+                </Grid>
+              ))}
+            </CustomGrid>
+          </Fade>
+        )}
+
+        {loading && (
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              minHeight: 300
+            }}
+          >
+            <CircularProgress />
+          </Box>
+        )}
+
+        <CreateTodoDialog
+          open={open}
+          onClose={() => setOpen(false)}
+        />
+
+        <Dialog
+          open={editDialogOpen}
+          onClose={() => setEditDialogOpen(false)}
+          maxWidth="sm"
+          fullWidth
+          aria-labelledby="edit-todo-title"
+          PaperProps={{
+            elevation: 0,
+            sx: {
+              borderRadius: { xs: '12px 12px 0 0', sm: 2 },
+              margin: { xs: 0, sm: 2 },
+              maxHeight: { xs: '100%', sm: '90vh' },
+              position: { xs: 'absolute', sm: 'relative' },
+              bottom: { xs: 0, sm: 'auto' },
+              width: '100%'
+            }
+          }}
+        >
+          <form onSubmit={handleEditSubmit}>
+            <DialogTitle 
+              id="edit-todo-title"
+              sx={{
+                background: 'linear-gradient(45deg, #00A389 30%, #00BFA6 90%)',
+                color: 'white',
+                p: { xs: 2, sm: 3 },
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 1,
+                '& .MuiTypography-root': {
+                  fontSize: { xs: '1.2rem', sm: '1.5rem' },
+                  fontWeight: 500
+                }
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <EditIcon aria-hidden="true" />
+                <span>Edit Todo</span>
+              </Box>
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={loading}
+                aria-label="Save changes"
+                sx={{
+                  borderRadius: 2,
+                  px: { xs: 2, sm: 3 },
+                  py: { xs: 1, sm: 1.5 },
+                  textTransform: 'none',
+                  fontWeight: 500,
+                  bgcolor: 'white',
+                  color: 'primary.main',
+                  fontSize: { xs: '0.875rem', sm: '1rem' },
+                  '&:hover': {
+                    bgcolor: 'rgba(255, 255, 255, 0.9)',
+                  }
+                }}
+              >
+                {loading ? (
+                  <CircularProgress size={24} sx={{ color: 'primary.main' }} aria-label="Loading" />
+                ) : (
+                  'Save Changes'
+                )}
+              </Button>
+            </DialogTitle>
+
+            <DialogContent 
+              sx={{ 
+                p: { xs: 2, sm: 3 },
+                height: { xs: 'calc(100vh - 70px)', sm: 'auto' },
+                overflowY: 'auto'
+              }}
+            >
+              <TextField
+                autoFocus
+                fullWidth
+                id="edit-todo-title"
+                label="Title"
+                placeholder="Enter a clear and specific task"
+                value={editTodo?.title || ''}
+                onChange={(e) => setEditTodo({ ...editTodo, title: e.target.value })}
+                required
+                sx={{ 
+                  mb: { xs: 2, sm: 3 },
+                  mt: 1,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2
+                  }
+                }}
+                helperText="Be specific about what needs to be accomplished"
+              />
+
+              <TextField
+                fullWidth
+                id="edit-todo-details"
+                label="Description"
+                placeholder="Add any important details or context"
+                multiline
+                rows={4}
+                value={editTodo?.description || ''}
+                onChange={(e) => setEditTodo({ ...editTodo, description: e.target.value })}
+                required
+                helperText="Include any relevant information others might need"
+                sx={{
+                  mb: { xs: 2, sm: 3 },
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2
+                  }
+                }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end" sx={{ alignSelf: 'flex-start', mt: 1, mr: 1 }}>
+                      <Tooltip title="Generate AI Description">
+                        <IconButton
+                          onClick={() => handleGenerateDescription(editTodo?.title)}
+                          disabled={isGeneratingDescription || !editTodo?.title}
+                          color="primary"
+                          size="small"
+                          aria-label="Generate AI description"
+                          sx={{
+                            bgcolor: 'background.paper',
+                            '&:hover': {
+                              bgcolor: 'action.hover'
+                            }
+                          }}
+                        >
+                          {isGeneratingDescription ? (
+                            <CircularProgress size={20} aria-label="Generating description" />
+                          ) : (
+                            <AutoFixHighIcon aria-hidden="true" />
+                          )}
+                        </IconButton>
+                      </Tooltip>
+                    </InputAdornment>
+                  )
+                }}
+              />
+
+              <TextField
+                select
+                fullWidth
+                id="edit-todo-priority"
+                label="Priority"
+                value={editTodo?.priority || 'medium'}
+                onChange={(e) => setEditTodo({ ...editTodo, priority: e.target.value })}
+                sx={{ 
+                  mb: { xs: 2, sm: 3 },
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2
+                  }
+                }}
+                helperText="Select the urgency level of this task"
+              >
+                {priorityOptions.map((option) => (
+                  <MenuItem
+                    key={option.value}
+                    value={option.value}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      py: 1.5
+                    }}
+                  >
+                    <Box
+                      aria-hidden="true"
+                      sx={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        backgroundColor: option.color,
+                        display: 'inline-block'
+                      }}
+                    />
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+
+              <TextField
+                fullWidth
+                id="edit-todo-due-date"
+                type="datetime-local"
+                label="Due Date"
+                value={editTodo?.due_date || ''}
+                onChange={(e) => setEditTodo({ ...editTodo, due_date: e.target.value })}
+                InputLabelProps={{ shrink: true }}
+                helperText="When should this task be completed?"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2
+                  }
+                }}
+              />
+            </DialogContent>
+          </form>
+        </Dialog>
+
+        <DeleteDialog
+          open={deleteDialogOpen}
+          onClose={() => {
+            setDeleteDialogOpen(false);
+            setTodoToDelete(null);
+          }}
+          onConfirm={handleConfirmDelete}
+          todoTitle={todoToDelete?.title || ''}
+        />
+
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'center'
+          }}
+          sx={{
+            bottom: { xs: 16, sm: 24 }
+          }}
+        >
+          <Alert
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
+            severity={snackbar.severity}
+            sx={{
+              width: '100%',
+              maxWidth: { xs: '100%', sm: 400 }
+            }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+
+        <Dialog
+          open={detailsDialog && selectedTodo !== null} 
+          onClose={() => {
+            setDetailsDialog(false);
+            setSelectedTodo(null);
+          }}
+          maxWidth="md"
+          fullWidth
+        >
+          {selectedTodo && (
+            <>
+              <DialogTitle sx={{ 
+                borderBottom: '1px solid',
+                borderColor: 'divider',
+                  bgcolor: selectedTodo.status === 'completed' ? 'success.main' : 'primary.main',
+                  color: 'white',
+                  display: 'flex',
+                justifyContent: 'space-between',
+                  alignItems: 'center',
+                transition: 'background-color 0.3s ease'
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  {selectedTodo.status === 'completed' ? 
+                    <CheckCircleIcon /> : 
+                    <PendingIcon />
+                  }
+                  Todo Details
+                </Box>
+                <Chip 
+                  label={selectedTodo.status.toUpperCase()}
+                  color={selectedTodo.status === 'completed' ? 'success' : 'default'}
+                  sx={{ 
+                    fontWeight: 'bold',
+                    bgcolor: 'white',
+                    '& .MuiChip-label': { px: 2 }
+                  }}
+                />
+              </DialogTitle>
+              <DialogContent sx={{ mt: 2 }}>
+                {/* Todo Details Card */}
+                <Paper elevation={0} variant="outlined" sx={{ p: 2, mb: 3 }}>
+                  <Typography variant="h6" color="primary.main" gutterBottom>
+                    {selectedTodo.title}
+                  </Typography>
+                  <Typography color="text.secondary" sx={{ mb: 2 }}>
+                    {selectedTodo.description}
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                        <CalendarTodayIcon color="action" fontSize="small" />
+                        <Typography variant="body2">
+                          Due: {moment(selectedTodo.due_date).format('DD/MM/YYYY')}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <AccessTimeIcon color="action" fontSize="small" />
+                        <Typography variant="body2">
+                          Time: {moment(selectedTodo.due_date).format('hh:mm A')}
+                    </Typography>
+                  </Box>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                        <FlagIcon color="action" fontSize="small" />
+                        <Typography variant="body2">
+                          Priority: {selectedTodo.priority.toUpperCase()}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <AssignmentTurnedInIcon color="action" fontSize="small" />
+                        <Typography variant="body2">
+                          Current Status: {selectedTodo.status.toUpperCase()}
+                    </Typography>
+                  </Box>
+                    </Grid>
+                  </Grid>
+                </Paper>
+
+                {/* Status History Timeline */}
+                {statusHistory && statusHistory.length > 0 && (
+                <Box sx={{ mt: 4 }}>
+                    <Typography variant="h6" gutterBottom sx={{ color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <HistoryIcon /> Status History
+                  </Typography>
+                    <Timeline position="alternate">
+                      {statusHistory.map((history, index) => (
+                        <TimelineItem key={index}>
+                          <TimelineOppositeContent color="text.secondary">
+                            {moment(history.updated_at).format('DD/MM/YYYY hh:mm A')}
+                          </TimelineOppositeContent>
+                          <TimelineSeparator>
+                            <TimelineDot 
+                              color={history.status === 'completed' ? 'success' : 'primary'}
+                              variant={index === 0 ? 'filled' : 'outlined'}
+                            >
+                              {history.status === 'completed' ? 
+                                <CheckCircleIcon fontSize="small" /> : 
+                                <PendingIcon fontSize="small" />
+                              }
+                            </TimelineDot>
+                            {index < statusHistory.length - 1 && <TimelineConnector />}
+                          </TimelineSeparator>
+                          <TimelineContent>
+                            <Paper elevation={0} variant="outlined" sx={{ 
+                              p: 2,
+                              bgcolor: index === 0 ? 'action.hover' : 'transparent'
+                            }}>
+                              <Typography variant="subtitle2" color="text.primary">
+                                Status changed to: <strong>{history.status.toUpperCase()}</strong>
+                            </Typography>
+                              {history.remarks && (
+                                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                                  "{history.remarks}"
+                                </Typography>
+                              )}
+                            </Paper>
+                          </TimelineContent>
+                        </TimelineItem>
+                      ))}
+                    </Timeline>
+                  </Box>
+                  )}
+              </DialogContent>
+              <DialogActions 
+                sx={{ 
+                  p: 2, 
+                  borderTop: '1px solid', 
+                  borderColor: 'divider',
+                  bgcolor: 'grey.50',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'stretch'
+                }}
+              >
+                <ActionButtons todo={selectedTodo} isMobile={isMobile} />
+              </DialogActions>
+            </>
+          )}
+        </Dialog>
+
+        <Dialog
+          open={openDialog}
+          onClose={() => setOpenDialog(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <form onSubmit={handleEditSubmit}>
+            <DialogTitle sx={{
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+              bgcolor: 'primary.main',
+              color: 'white',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              px: 3,
+              py: 2,
+              borderRadius: '8px 8px 0 0'
+            }}>
+              <Typography variant="h6" component="div">
+                Edit Todo
+              </Typography>
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={loading}
+                sx={{
+                  bgcolor: 'white',
+                  color: 'primary.main',
+                  '&:hover': {
+                    bgcolor: 'primary.dark'
+                  }
+                }}
+              >
+                {loading ? <CircularProgress size={24} /> : 'Save Changes'}
+              </Button>
+            </DialogTitle>
+            <DialogContent sx={{ pt: 2, mt: 2 }}>
+              <TextField
+                fullWidth
+                id="edit-todo-title"
+                label="Title"
+                value={editTodo?.title || ''}
+                onChange={(e) => setEditTodo({ ...editTodo, title: e.target.value })}
+                required
+                sx={{ mb: 2, mt: 2, borderRadius: 2 }}
+              />
+              <TextField
+                fullWidth
+                id="edit-todo-details"
+                label="Description"
+                placeholder="Add any important details or context"
+                multiline
+                rows={4}
+                value={editTodo?.description || ''}
+                onChange={(e) => setEditTodo({ ...editTodo, description: e.target.value })}
+                required
+                helperText="Include any relevant information others might need"
+                sx={{
+                  mb: { xs: 2, sm: 3 },
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2
+                  }
+                }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end" sx={{ alignSelf: 'flex-start', mt: 1, mr: 1 }}>
+                      <Tooltip title="Generate AI Description">
+                        <IconButton
+                          onClick={() => handleGenerateDescription(editTodo?.title)}
+                          disabled={isGeneratingDescription || !editTodo?.title}
+                          color="primary"
+                          size="small"
+                          aria-label="Generate AI description"
+                          sx={{
+                            bgcolor: 'background.paper',
+                            '&:hover': {
+                              bgcolor: 'action.hover'
+                            }
+                          }}
+                        >
+                          {isGeneratingDescription ? (
+                            <CircularProgress size={20} aria-label="Generating description" />
+                          ) : (
+                            <AutoFixHighIcon aria-hidden="true" />
+                          )}
+                        </IconButton>
+                      </Tooltip>
+                    </InputAdornment>
+                  )
+                }}
+              />
+              <TextField
+                select
+                fullWidth
+                id="edit-todo-priority"
+                label="Priority"
+                value={editTodo?.priority || 'medium'}
+                onChange={(e) => setEditTodo({ ...editTodo, priority: e.target.value })}
+                sx={{ mb: 2, borderRadius: 2 }}
+              >
+                {priorityOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <TextField
+                fullWidth
+                id="edit-todo-due-date"
+                label="Due Date"
+                type="datetime-local"
+                value={editTodo?.due_date || ''}
+                onChange={(e) => setEditTodo({ ...editTodo, due_date: e.target.value })}
+                InputLabelProps={{ shrink: true }}
+                sx={{ borderRadius: 2 }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <CalendarTodayIcon />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <AccessTimeIcon />
+                    </InputAdornment>
+                  )
+                }}
+              />
+            </DialogContent>
+          </form>
+        </Dialog>
+
+        <Dialog
+          open={statusUpdateDialog}
+          onClose={() => setStatusUpdateDialog(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle sx={{ 
+            bgcolor: 'primary.main',
+            color: 'white'
+          }}>
+            Update Todo Status
+          </DialogTitle>
+          <DialogContent sx={{ mt: 2, pb: 1 }}>
+            {todoToUpdate && (
+              <>
+                <Typography variant="subtitle1" gutterBottom>
+                  Are you sure you want to mark this todo as {todoToUpdate.status === 'completed' ? 'pending' : 'completed'}?
+                </Typography>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Todo: {todoToUpdate.title}
+                </Typography>
+            <TextField
+                  fullWidth
+                  multiline
+                  rows={3}
+                  label="Add remarks (optional)"
+              value={statusRemarks}
+              onChange={(e) => setStatusRemarks(e.target.value)}
+              margin="normal"
+                  variant="outlined"
+                  placeholder="Enter any additional notes about this status change..."
+            />
+              </>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ p: 2, gap: 1 }}>
+            <Button
+              onClick={() => setStatusUpdateDialog(false)}
+              variant="outlined"
+              color="inherit"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleStatusUpdate}
+              variant="contained"
+              color="primary"
+              startIcon={<CheckCircleIcon />}
+            >
+              Confirm Status Change
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
+    );
+  } catch (error) {
+    console.error('Error in TodoList:', error);
+    return <div>Error loading todos. Please try again.</div>;
+  }
 };
 
 export default React.memo(TodoList);

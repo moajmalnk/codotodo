@@ -9,7 +9,7 @@
     "@mui/icons-material": "^5.15.6",
     "@mui/lab": "^5.0.0-alpha.162",
     "@mui/material": "^5.15.6",
-    "@mui/x-date-pickers": "^7.24.0",
+    "@mui/x-date-pickers": "^7.24.1",
     "@mui/x-date-pickers-pro": "^7.24.0",
     "@types/date-fns": "^2.5.3",
     "axios": "^1.7.9",
@@ -20,9 +20,9 @@
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.21.3",
     "react-scripts": "5.0.1",
-    "web-vitals": "^3.5.1"
+    "web-vitals": "^3.5.1",
+    "prop-types": "^15.8.1"
   },
-  
   "scripts": {
     "start": "react-scripts start",
     "build": "CI=false react-scripts build",
