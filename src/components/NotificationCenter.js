@@ -23,7 +23,7 @@ const NotificationCenter = () => {
 
     const fetchNotifications = async () => {
         try {
-            const response = await axios.get('https://todo.moajmalnk.in/api/notifications.php');
+            const response = await axios.get('https://todobackend.moajmalnk.in/api/notifications.php');
             setNotifications(response.data);
         } catch (error) {
             console.error('Error fetching notifications:', error);
@@ -32,7 +32,7 @@ const NotificationCenter = () => {
 
     const createNotification = async (title, message, priority = 'medium') => {
         try {
-            await axios.post('https://todo.moajmalnk.in/api/notifications.php', {
+            await axios.post('https://todobackend.moajmalnk.in/api/notifications.php', {
                 title,
                 message,
                 priority,
@@ -77,7 +77,7 @@ const NotificationCenter = () => {
 
     const markAsRead = async (id) => {
         try {
-            await axios.put('https://todo.moajmalnk.in/api/notifications.php', { id });
+            await axios.put('https://todobackend.moajmalnk.in/api/notifications.php', { id });
             fetchNotifications();
         } catch (error) {
             console.error('Error marking notification as read:', error);

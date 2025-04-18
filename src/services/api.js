@@ -1,4 +1,4 @@
-const API_URL = process.env.REACT_APP_API_URL || 'https://todo.moajmalnk.in/api';
+const API_URL = process.env.REACT_APP_API_URL || 'https://todobackend.moajmalnk.in/api';
 
 export const fetchTodos = async () => {
     try {

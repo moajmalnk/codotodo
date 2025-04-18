@@ -1,6 +1,6 @@
 const generateDescription = async (todoTitle) => {
   try {
-    const response = await fetch('https://todo.moajmalnk.in/api/generate-description.php', {
+    const response = await fetch('https://todobackend.moajmalnk.in/api/generate-description.php', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
