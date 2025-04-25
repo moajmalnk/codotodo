@@ -1,0 +1,27 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Project Structure Guide
+
+This document outlines the main structure of the Todo application codebase.
+
+## Core Files
+- [src/index.js](mdc:src/index.js) - Main entry point of the application
+- [src/App.js](mdc:src/App.js) - Root component containing the main application logic
+- [src/config.js](mdc:src/config.js) - Global configuration settings
+
+## Key Directories
+- `src/components/` - React components used throughout the application
+- `src/context/` - React context providers for state management
+- `src/hooks/` - Custom React hooks
+- `src/services/` - API and external service integrations
+- `src/utils/` - Utility functions and helper methods
+- `src/config/` - Configuration files and constants
+
+## Testing and Setup
+- [src/setupTests.js](mdc:src/setupTests.js) - Test configuration
+- [src/App.test.js](mdc:src/App.test.js) - Main application tests
+- [src/reportWebVitals.js](mdc:src/reportWebVitals.js) - Performance monitoring
+

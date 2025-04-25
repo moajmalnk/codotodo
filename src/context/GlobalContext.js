@@ -7,6 +7,7 @@ export const GlobalProvider = ({ children }) => {
   const [priority, setPriority] = useState('all');
   const [status, setStatus] = useState('all');
   const [dueDate, setDueDate] = useState('all');
+  const [isPrivacyMode, setIsPrivacyMode] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   return (
@@ -19,6 +20,8 @@ export const GlobalProvider = ({ children }) => {
       setStatus,
       dueDate,
       setDueDate,
+      isPrivacyMode,
+      setIsPrivacyMode,
       snackbar,
       setSnackbar,
     }}>

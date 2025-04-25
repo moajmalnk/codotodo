@@ -44,6 +44,8 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import { format, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 
 // Styled components
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
@@ -312,6 +314,19 @@ const ClearAllButton = styled(Button)(({ theme }) => ({
   }
 }));
 
+// Add new styled component for the privacy button
+const PrivacyButton = styled(IconButton)(({ theme, active }) => ({
+  width: { xs: 36, sm: 40 },
+  height: { xs: 36, sm: 40 },
+  borderRadius: '12px',
+  backgroundColor: active ? theme.palette.primary.main : 'transparent',
+  color: active ? 'white' : 'inherit',
+  '&:hover': {
+    backgroundColor: active ? theme.palette.primary.dark : theme.palette.action.hover,
+  },
+  transition: 'all 0.2s ease-in-out',
+}));
+
 const Navbar = ({ todos, onFilterChange }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -327,6 +342,8 @@ const Navbar = ({ todos, onFilterChange }) => {
     setStatus,
     dueDate,
     setDueDate,
+    isPrivacyMode,
+    setIsPrivacyMode,
   } = useContext(GlobalContext);
 
   const [activeTab, setActiveTab] = useState(0);
@@ -503,6 +520,17 @@ const Navbar = ({ todos, onFilterChange }) => {
     );
   };
 
+  // Add privacy mode toggle handler
+  const handlePrivacyToggle = () => {
+    setIsPrivacyMode(!isPrivacyMode);
+    // Add a CSS class to the body when privacy mode is enabled
+    if (!isPrivacyMode) {
+      document.body.classList.add('privacy-mode');
+    } else {
+      document.body.classList.remove('privacy-mode');
+    }
+  };
+
   return (
     <>
       <StyledAppBar position="fixed">
@@ -605,6 +633,16 @@ const Navbar = ({ todos, onFilterChange }) => {
             gap: { xs: 0.5, sm: 1 },
             alignItems: 'center'
           }}>
+            <Tooltip title={isPrivacyMode ? "Disable Privacy Mode" : "Enable Privacy Mode"}>
+              <PrivacyButton
+                onClick={handlePrivacyToggle}
+                active={isPrivacyMode}
+                aria-label="Toggle privacy mode"
+              >
+                {isPrivacyMode ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+              </PrivacyButton>
+            </Tooltip>
+
             <Tooltip title="Filters">
               <IconButton 
                 color="inherit" 

@@ -6,6 +6,7 @@ import Navbar from './components/Navbar';
 import TodoList from './components/TodoList';
 import Meets from './components/Meets';
 import { GlobalProvider } from './context/GlobalContext';
+import './styles.css';
 
 const theme = createTheme({
   palette: {
@@ -111,11 +112,13 @@ function App() {
         <CssBaseline />
         <Router>
           <Navbar />
-          <Routes>
-            <Route path="/" element={<TodoList />} />
-            <Route path="/todos" element={<TodoList />} />
-            <Route path="/meets" element={<Meets />} />
-          </Routes>
+          <div className="blur-content" style={{ paddingTop: '64px' }}>
+            <Routes>
+              <Route path="/" element={<TodoList />} />
+              <Route path="/todos" element={<TodoList />} />
+              <Route path="/meets" element={<Meets />} />
+            </Routes>
+          </div>
         </Router>
       </ThemeProvider>
     </GlobalProvider>

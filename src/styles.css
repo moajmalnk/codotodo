@@ -1,0 +1,18 @@
+/* Privacy Mode Styles */
+.privacy-mode .blur-content {
+  filter: blur(6px);
+  user-select: none;
+  pointer-events: none;
+  transition: filter 0.3s ease-in-out;
+}
+
+.privacy-mode .blur-content:hover {
+  filter: blur(8px);
+}
+
+/* Exclude certain elements from blur effect */
+.privacy-mode .no-blur {
+  filter: none !important;
+  user-select: auto !important;
+  pointer-events: auto !important;
+} 
