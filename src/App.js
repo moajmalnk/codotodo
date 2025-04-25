@@ -1,10 +1,11 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, createBrowserRouter } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
 import Navbar from './components/Navbar';
 import TodoList from './components/TodoList';
 import Meets from './components/Meets';
+import Login from './components/Login';
 import { GlobalProvider } from './context/GlobalContext';
 import './styles.css';
 
@@ -83,40 +84,84 @@ const theme = createTheme({
   },
 });
 
-function App() {
-  const routes = [
-    {
-      path: "/",
-      element: <TodoList />,
-    },
-    {
-      path: "/todos",
-      element: <TodoList />,
-    },
-    {
-      path: "/meets",
-      element: <Meets />,
-    },
-  ];
+// Protected Route Component
+const ProtectedRoute = ({ children }) => {
+  const location = useLocation();
+  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+  
+  if (!isLoggedIn) {
+    // Redirect to login page with the return url
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  
+  return children;
+};
 
-  const router = createBrowserRouter(routes, {
-    future: {
-      v7_startTransition: true,
-      v7_relativeSplatPath: true
-    }
-  });
+function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem('isLoggedIn') === 'true');
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setIsLoggedIn(localStorage.getItem('isLoggedIn') === 'true');
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Custom event for login state changes
+    window.addEventListener('loginStateChange', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('loginStateChange', handleStorageChange);
+    };
+  }, []);
 
   return (
     <GlobalProvider>
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <Router>
-          <Navbar />
-          <div className="blur-content" style={{ paddingTop: '64px' }}>
+          {isLoggedIn && <Navbar />}
+          <div className={isLoggedIn ? "blur-content" : ""} style={{ paddingTop: isLoggedIn ? '64px' : 0 }}>
             <Routes>
-              <Route path="/" element={<TodoList />} />
-              <Route path="/todos" element={<TodoList />} />
-              <Route path="/meets" element={<Meets />} />
+              <Route 
+                path="/login" 
+                element={
+                  isLoggedIn ? (
+                    <Navigate to="/todos" replace />
+                  ) : (
+                    <Login />
+                  )
+                } 
+              />
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <TodoList />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/todos"
+                element={
+                  <ProtectedRoute>
+                    <TodoList />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/meets"
+                element={
+                  <ProtectedRoute>
+                    <Meets />
+                  </ProtectedRoute>
+                }
+              />
+              <Route 
+                path="*" 
+                element={<Navigate to={isLoggedIn ? "/todos" : "/login"} replace />} 
+              />
             </Routes>
           </div>
         </Router>

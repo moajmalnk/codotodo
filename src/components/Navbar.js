@@ -46,6 +46,7 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import { format, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 // Styled components
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
@@ -324,7 +325,17 @@ const PrivacyButton = styled(IconButton)(({ theme, active }) => ({
   '&:hover': {
     backgroundColor: active ? theme.palette.primary.dark : theme.palette.action.hover,
   },
-  transition: 'all 0.2s ease-in-out',
+}));
+
+// Add new styled component for the logout button
+const LogoutButton = styled(IconButton)(({ theme }) => ({
+  width: { xs: 36, sm: 40 },
+  height: { xs: 36, sm: 40 },
+  borderRadius: '12px',
+  '&:hover': {
+    backgroundColor: theme.palette.error.light,
+    color: theme.palette.error.main,
+  },
 }));
 
 const Navbar = ({ todos, onFilterChange }) => {
@@ -531,6 +542,11 @@ const Navbar = ({ todos, onFilterChange }) => {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.clear(); // Clear all localStorage items
+    navigate('/login', { replace: true });
+  };
+
   return (
     <>
       <StyledAppBar position="fixed">
@@ -636,7 +652,7 @@ const Navbar = ({ todos, onFilterChange }) => {
             <Tooltip title={isPrivacyMode ? "Disable Privacy Mode" : "Enable Privacy Mode"}>
               <PrivacyButton
                 onClick={handlePrivacyToggle}
-                active={isPrivacyMode}
+                active={isPrivacyMode ? 1 : 0}
                 aria-label="Toggle privacy mode"
               >
                 {isPrivacyMode ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
@@ -690,6 +706,15 @@ const Navbar = ({ todos, onFilterChange }) => {
                 {location.pathname === '/todos' ? ' Todo' : ' Meet'}
               </Button>
             ) : null}
+
+            <Tooltip title="Logout">
+              <LogoutButton
+                onClick={handleLogout}
+                aria-label="Logout"
+              >
+                <LogoutIcon fontSize="small" />
+              </LogoutButton>
+            </Tooltip>
           </Box>
         </Toolbar>
         
