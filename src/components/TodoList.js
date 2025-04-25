@@ -949,24 +949,51 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
   // Add loading skeleton component
   const LoadingSkeleton = () => (
     <CustomGrid container spacing={2}>
-      {[1, 2, 3, 4].map((item) => (
-        <Grid item xs={12} sm={6} md={4} key={item}>
-          <TodoItem elevation={2}>
-            <TodoContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Skeleton variant="text" width="70%" height={28} />
-                <Skeleton variant="circular" width={32} height={32} />
+      {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((item) => (
+        <Grid item xs={12} sm={6} md={4} lg={3} key={item}>
+          <TodoItem elevation={1}>
+            {/* Priority Badge */}
+            <Box sx={{ position: 'absolute', right: 8, top: 8 }}>
+              <Skeleton variant="rectangular" width={70} height={24} sx={{ borderRadius: '16px' }} />
+            </Box>
+
+            {/* Title and Description */}
+            <Box sx={{ mb: 2, mt: 1 }}>
+              <Skeleton variant="text" width="70%" height={28} sx={{ mb: 1 }} />
+              <Skeleton variant="text" width="100%" />
+              <Skeleton variant="text" width="90%" />
+            </Box>
+
+            {/* Date and Time */}
+            <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Skeleton variant="circular" width={20} height={20} />
+                <Skeleton variant="text" width={80} />
               </Box>
-              <Skeleton variant="rectangular" height={80} />
-              <Box sx={{ mt: 2 }}>
-                <Skeleton variant="text" width="40%" />
-                <Skeleton variant="text" width="60%" />
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Skeleton variant="circular" width={20} height={20} />
+                <Skeleton variant="text" width={60} />
               </Box>
-              <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between' }}>
-                <Skeleton variant="rounded" width={100} height={32} />
-                <Skeleton variant="rounded" width={100} height={32} />
+            </Box>
+
+            {/* Status and Creation Time */}
+            <Box sx={{ 
+              mt: 'auto',
+              pt: 2,
+              borderTop: '1px solid',
+              borderColor: 'divider',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 1
+            }}>
+              <Skeleton variant="rectangular" width={90} height={32} sx={{ borderRadius: '16px' }} />
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Skeleton variant="circular" width={16} height={16} />
+                <Skeleton variant="text" width={80} />
               </Box>
-            </TodoContent>
+            </Box>
           </TodoItem>
         </Grid>
       ))}

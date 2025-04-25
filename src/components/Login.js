@@ -73,18 +73,39 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [mounted, setMounted] = useState(true);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  // Constants for validation
+  const VALID_EMAIL = 'moajmalnk@gmail.com';
+  const VALID_OTP = '995559';
 
   useEffect(() => {
-    // Check if user is already logged in
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    if (isLoggedIn) {
-      navigate('/todos', { replace: true });
-    }
+    const checkAuth = async () => {
+      try {
+        setIsCheckingAuth(true);
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        
+        if (isLoggedIn) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          navigate('/todos', { replace: true });
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAuth();
     
     return () => {
       setMounted(false);
     };
   }, [navigate]);
+
+  if (isCheckingAuth) {
+    return null;
+  }
 
   const showNotification = (message, severity) => {
     if (mounted) {
@@ -104,12 +125,15 @@ const Login = () => {
       return;
     }
 
+    if (email !== VALID_EMAIL) {
+      showNotification('Invalid email address. Please use exact email address', 'error');
+      return;
+    }
+
     setVerifying(true);
     
     try {
-      // Minimal delay for visual feedback
       await new Promise((resolve) => setTimeout(resolve, 200));
-      
       setShowOtpField(true);
       showNotification('OTP has been sent to ' + email, 'success');
     } catch (error) {
@@ -127,26 +151,30 @@ const Login = () => {
       return;
     }
 
+    if (email !== VALID_EMAIL) {
+      showNotification('Invalid email address. Please use exact email address', 'error');
+      return;
+    }
+
     setLoading(true);
     
     try {
-      // Minimal delay for visual feedback
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      
       if (otp === VALID_OTP) {
         localStorage.setItem('isLoggedIn', 'true');
         localStorage.setItem('userEmail', email);
         
-        // Dispatch custom event to notify App component
+        await new Promise(resolve => setTimeout(resolve, 200));
         window.dispatchEvent(new Event('loginStateChange'));
         
         showNotification('Login successful!', 'success');
         navigate('/todos', { replace: true });
       } else {
-        showNotification('Invalid OTP', 'error');
+        showNotification('Invalid OTP. Please enter valied OTP', 'error');
       }
     } catch (error) {
       showNotification('Error during login', 'error');
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('userEmail');
     } finally {
       setLoading(false);
     }
@@ -162,8 +190,6 @@ const Login = () => {
       }
     }
   };
-
-  const VALID_OTP = '995559';
 
   return (
     <LoginContainer>
@@ -181,13 +207,15 @@ const Login = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={showOtpField}
                 onKeyPress={handleKeyPress}
-                placeholder="Enter your email"
+                placeholder="Enter moajmalnk@gmail.com"
                 type="email"
                 required
+                error={email && email !== VALID_EMAIL}
+                helperText={email && email !== VALID_EMAIL ? 'Please use exact email address' : ''}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Email color="action" />
+                      <Email color={email && email !== VALID_EMAIL ? "error" : "action"} />
                     </InputAdornment>
                   ),
                 }}
@@ -228,8 +256,10 @@ const Login = () => {
                   onChange={(e) => setOtp(e.target.value)}
                   onKeyPress={handleKeyPress}
                   type="number"
-                  placeholder="Enter 6-digit OTP"
+                  placeholder="Enter 995559"
                   required
+                  error={otp && otp !== VALID_OTP}
+                  helperText={otp && otp !== VALID_OTP ? 'Please enter valied OTP' : ''}
                   inputProps={{ 
                     maxLength: 6,
                     pattern: '[0-9]*'

@@ -21,6 +21,10 @@ import {
   Tabs,
   Tab,
   Collapse,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -362,6 +366,7 @@ const Navbar = ({ todos, onFilterChange }) => {
   const [showCustomDate, setShowCustomDate] = useState(false);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
 
   const menuItems = [
     { text: 'Home', icon: <HomeIcon />, path: '/' },
@@ -542,9 +547,19 @@ const Navbar = ({ todos, onFilterChange }) => {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogoutClick = () => {
+    setLogoutDialogOpen(true);
+  };
+
+  const handleLogoutConfirm = () => {
     localStorage.clear(); // Clear all localStorage items
-    navigate('/login', { replace: true });
+    setLogoutDialogOpen(false);
+    // Force a page reload to ensure clean state
+    window.location.href = '/login';
+  };
+
+  const handleLogoutCancel = () => {
+    setLogoutDialogOpen(false);
   };
 
   return (
@@ -709,7 +724,7 @@ const Navbar = ({ todos, onFilterChange }) => {
 
             <Tooltip title="Logout">
               <LogoutButton
-                onClick={handleLogout}
+                onClick={handleLogoutClick}
                 aria-label="Logout"
               >
                 <LogoutIcon fontSize="small" />
@@ -1071,6 +1086,91 @@ const Navbar = ({ todos, onFilterChange }) => {
           )}
         </Box>
       </Drawer>
+
+      {/* Logout Confirmation Dialog */}
+      <Dialog
+        open={logoutDialogOpen}
+        onClose={handleLogoutCancel}
+        TransitionComponent={Fade}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          elevation: 0,
+          sx: {
+            borderRadius: '12px',
+            overflow: 'hidden'
+          }
+        }}
+      >
+        <DialogTitle 
+          sx={{
+            bgcolor: 'error.main',
+            color: 'white',
+            py: 2,
+            px: 3,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            fontSize: '1.1rem',
+            fontWeight: 500
+          }}
+        >
+          <LogoutIcon fontSize="small" />
+          Confirm Logout
+        </DialogTitle>
+        
+        <DialogContent sx={{ p: 3 }}>
+          <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
+            Are you sure you want to logout?
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            You will need to login again to access your account.
+          </Typography>
+        </DialogContent>
+        
+        <DialogActions sx={{ 
+          px: 3, 
+          pb: 3,
+          gap: 1
+        }}>
+          <Button 
+            onClick={handleLogoutCancel}
+            variant="outlined"
+            sx={{
+              borderRadius: '8px',
+              textTransform: 'none',
+              px: 3,
+              py: 1,
+              color: 'text.primary',
+              borderColor: 'divider',
+              '&:hover': {
+                borderColor: 'text.primary',
+                bgcolor: 'action.hover'
+              }
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleLogoutConfirm}
+            variant="contained"
+            color="error"
+            startIcon={<LogoutIcon />}
+            sx={{
+              borderRadius: '8px',
+              textTransform: 'none',
+              px: 3,
+              py: 1,
+              bgcolor: 'error.main',
+              '&:hover': {
+                bgcolor: 'error.dark'
+              }
+            }}
+          >
+            Logout
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };

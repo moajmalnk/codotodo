@@ -213,26 +213,63 @@ const PriorityBadge = styled(Chip)(({ theme }) => ({
 
 // Add LoadingSkeleton component
 const LoadingSkeleton = () => (
-  <Grid container spacing={2}>
-    {[1, 2, 3].map((item) => (
-      <Grid item xs={12} sm={6} md={4} key={item}>
-        <Paper sx={{ p: 2, height: '100%' }}>
-          <Skeleton variant="rectangular" height={24} sx={{ mb: 2 }} />
-          <Skeleton variant="text" sx={{ mb: 1 }} />
-          <Skeleton variant="text" sx={{ mb: 2 }} />
-          <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-            <Skeleton variant="rectangular" width={100} height={24} />
-            <Skeleton variant="rectangular" width={80} height={24} />
+  <Grid container spacing={3}>
+    {[1, 2, 3, 4, 5, 6].map((item) => (
+      <Grid item xs={12} sm={6} md={4} lg={3} key={item}>
+        <MeetCard elevation={1}>
+          {/* Priority Badge */}
+          <Box sx={{ position: 'absolute', right: 8, top: 8 }}>
+            <Skeleton variant="rectangular" width={60} height={24} sx={{ borderRadius: '12px' }} />
           </Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+
+          {/* Title */}
+          <Box sx={{ mb: 2, pr: 4 }}>
+            <Skeleton variant="text" height={28} width="90%" />
+            <Skeleton variant="text" height={28} width="70%" />
+          </Box>
+
+          {/* Date and Time */}
+          <Box sx={{ mb: 2 }}>
+            <Skeleton 
+              variant="rectangular" 
+              width={120} 
+              height={32} 
+              sx={{ 
+                borderRadius: 1,
+                bgcolor: (theme) => alpha(theme.palette.success.main, 0.1)
+              }} 
+            />
+          </Box>
+
+          {/* Status and Time */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+            <Skeleton variant="rectangular" width={80} height={24} sx={{ borderRadius: '12px' }} />
+            <Skeleton variant="text" width={100} />
+          </Box>
+
+          {/* Description/Agenda */}
+          <Box sx={{ mb: 2 }}>
+            <Skeleton variant="text" />
+            <Skeleton variant="text" width="80%" />
+          </Box>
+
+          {/* Attendees Section */}
+          <Box sx={{ 
+            pt: 2,
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}>
             <Box sx={{ display: 'flex', gap: 1 }}>
-              <Skeleton variant="circular" width={32} height={32} />
-              <Skeleton variant="circular" width={32} height={32} />
-              <Skeleton variant="circular" width={32} height={32} />
+              <Skeleton variant="circular" width={28} height={28} />
+              <Skeleton variant="circular" width={28} height={28} />
+              <Skeleton variant="circular" width={28} height={28} />
             </Box>
-            <Skeleton variant="rectangular" width={100} height={32} />
+            <Skeleton variant="text" width={80} />
           </Box>
-        </Paper>
+        </MeetCard>
       </Grid>
     ))}
   </Grid>

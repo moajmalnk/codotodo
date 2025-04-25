@@ -87,23 +87,49 @@ const theme = createTheme({
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const location = useLocation();
-  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-  
-  if (!isLoggedIn) {
-    // Redirect to login page with the return url
+  const [isChecking, setIsChecking] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        // Add a small delay to prevent rapid checks
+        await new Promise(resolve => setTimeout(resolve, 50));
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        setIsAuthenticated(isLoggedIn);
+      } finally {
+        setIsChecking(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  if (isChecking) {
+    return null; // or a loading spinner if you prefer
+  }
+
+  if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
-  
+
   return children;
 };
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem('isLoggedIn') === 'true');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
-    const handleStorageChange = () => {
-      const loginState = localStorage.getItem('isLoggedIn') === 'true';
-      setIsLoggedIn(loginState);
+    const handleStorageChange = async () => {
+      try {
+        // Add a small delay to prevent rapid state changes
+        await new Promise(resolve => setTimeout(resolve, 50));
+        const loginState = localStorage.getItem('isLoggedIn') === 'true';
+        setIsLoggedIn(loginState);
+      } finally {
+        setIsInitializing(false);
+      }
     };
 
     // Listen for both storage and custom login state changes
@@ -118,6 +144,11 @@ function App() {
       window.removeEventListener('loginStateChange', handleStorageChange);
     };
   }, []);
+
+  // Don't render anything while initializing
+  if (isInitializing) {
+    return null;
+  }
 
   return (
     <GlobalProvider>
