@@ -102,13 +102,16 @@ function App() {
 
   useEffect(() => {
     const handleStorageChange = () => {
-      setIsLoggedIn(localStorage.getItem('isLoggedIn') === 'true');
+      const loginState = localStorage.getItem('isLoggedIn') === 'true';
+      setIsLoggedIn(loginState);
     };
 
+    // Listen for both storage and custom login state changes
     window.addEventListener('storage', handleStorageChange);
-    
-    // Custom event for login state changes
     window.addEventListener('loginStateChange', handleStorageChange);
+    
+    // Check login state on mount
+    handleStorageChange();
     
     return () => {
       window.removeEventListener('storage', handleStorageChange);

@@ -136,6 +136,10 @@ const Login = () => {
       if (otp === VALID_OTP) {
         localStorage.setItem('isLoggedIn', 'true');
         localStorage.setItem('userEmail', email);
+        
+        // Dispatch custom event to notify App component
+        window.dispatchEvent(new Event('loginStateChange'));
+        
         showNotification('Login successful!', 'success');
         navigate('/todos', { replace: true });
       } else {
