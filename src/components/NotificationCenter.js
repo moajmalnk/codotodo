@@ -116,14 +116,6 @@ const NotificationCenter = () => {
 
     const unreadCount = notifications.filter(n => n.status === 'unread').length;
 
-    if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('Todo Added', {
-            body: 'Your new todo was added successfully!',
-            icon: '/favicon.ico'
-        });
-        playNotificationSound();
-    }
-
     return (
         <>
             <IconButton
