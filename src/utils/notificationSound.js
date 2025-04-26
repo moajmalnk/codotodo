@@ -24,7 +24,13 @@ const unlockAudio = () => {
 window.addEventListener('click', unlockAudio, { once: true });
 window.addEventListener('touchstart', unlockAudio, { once: true });
 
+// Only play sound if user has interacted with the page
+let userInteracted = false;
+window.addEventListener('click', () => { userInteracted = true; }, { once: true });
+
 const playNotificationSound = async (type = 'general') => {
+  if (!userInteracted) return; // Don't play if no interaction yet
+
   try {
     const audio = type === 'completion' ? completionAudio : generalAudio;
     audio.currentTime = 0;

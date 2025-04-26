@@ -1172,6 +1172,7 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
           <TextField
             fullWidth
             multiline
+            required
             rows={4}
             label="Description"
             placeholder="Add any important details or context"
