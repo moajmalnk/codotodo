@@ -179,7 +179,18 @@ function App() {
 
   // Don't render anything while initializing
   if (isInitializing) {
-    return null;
+    return (
+      <div style={{
+        width: '100vw',
+        height: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#f0f3ff'
+      }}>
+        <span style={{ color: '#00b764', fontWeight: 600, fontSize: 24 }}>Loading...</span>
+      </div>
+    );
   }
 
   return (
