@@ -547,13 +547,16 @@ const Navbar = ({ todos, onFilterChange }) => {
 
   // Add privacy mode toggle handler
   const handlePrivacyToggle = () => {
-    setIsPrivacyMode(!isPrivacyMode);
-    // Add a CSS class to the body when privacy mode is enabled
-    if (!isPrivacyMode) {
-      document.body.classList.add('privacy-mode');
-    } else {
-      document.body.classList.remove('privacy-mode');
-    }
+    setIsPrivacyMode(prev => {
+      const newValue = !prev;
+      if (newValue) {
+        document.body.classList.add('privacy-mode');
+      } else {
+        document.body.classList.remove('privacy-mode');
+      }
+      localStorage.setItem('isPrivacyMode', newValue ? 'true' : 'false');
+      return newValue;
+    });
   };
 
   const handleLogoutClick = () => {
@@ -621,6 +624,16 @@ const Navbar = ({ todos, onFilterChange }) => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handlePrivacyToggle, navigate]);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('isPrivacyMode') === 'true';
+    setIsPrivacyMode(stored);
+    if (stored) {
+      document.body.classList.add('privacy-mode');
+    } else {
+      document.body.classList.remove('privacy-mode');
+    }
+  }, [setIsPrivacyMode]);
 
   return (
     <>
@@ -728,6 +741,7 @@ const Navbar = ({ todos, onFilterChange }) => {
                 onClick={handlePrivacyToggle}
                 active={isPrivacyMode ? 1 : 0}
                 aria-label="Toggle privacy mode"
+                sx={{ display: { xs: 'flex', sm: 'flex', md: 'none' } }}
               >
                 {isPrivacyMode ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
               </PrivacyButton>

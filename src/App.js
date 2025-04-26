@@ -7,6 +7,7 @@ import TodoList from './components/TodoList';
 import Meets from './components/Meets';
 import Login from './components/Login';
 import { GlobalProvider } from './context/GlobalContext';
+import NotificationCenter from './components/NotificationCenter';
 import './styles.css';
 
 const theme = createTheme({
@@ -155,6 +156,16 @@ function App() {
     });
   }, []);
 
+  // Auto-close install banner after 10 seconds
+  useEffect(() => {
+    if (showInstallBanner) {
+      const timer = setTimeout(() => {
+        setShowInstallBanner(false);
+      }, 10000);
+      return () => clearTimeout(timer);
+    }
+  }, [showInstallBanner]);
+
   const handleInstallClick = () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();
@@ -176,6 +187,7 @@ function App() {
     <GlobalProvider>
       <ThemeProvider theme={theme}>
         <CssBaseline />
+        <NotificationCenter />
         <Router>
           {isLoggedIn && <Navbar />}
           <div className={isLoggedIn ? "blur-content" : ""} style={{ paddingTop: isLoggedIn ? '64px' : 0 }}>
