@@ -210,12 +210,12 @@ const Login = () => {
                 placeholder="Enter moajmalnk@gmail.com"
                 type="email"
                 required
-                error={email && email !== VALID_EMAIL}
-                helperText={email && email !== VALID_EMAIL ? 'Please use exact email address' : ''}
+                error={!!email && email !== VALID_EMAIL}
+                helperText={!!email && email !== VALID_EMAIL ? 'Please use exact email address' : ''}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Email color={email && email !== VALID_EMAIL ? "error" : "action"} />
+                      <Email color={!!email && email !== VALID_EMAIL ? "error" : "action"} />
                     </InputAdornment>
                   ),
                 }}
@@ -258,8 +258,8 @@ const Login = () => {
                   type="number"
                   placeholder="Enter OTP"
                   required
-                  error={otp && otp !== VALID_OTP}
-                  helperText={otp && otp !== VALID_OTP ? 'Please enter valied OTP' : ''}
+                  error={Boolean(otp && otp !== VALID_OTP)}
+                  helperText={!!otp && otp !== VALID_OTP ? 'Please enter valied OTP' : ''}
                   inputProps={{ 
                     maxLength: 6,
                     pattern: '[0-9]*'

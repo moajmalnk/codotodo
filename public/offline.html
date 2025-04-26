@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CODO ToDo - Offline</title>
+    <meta name="description" content="You are offline. Please check your internet connection and try again.">
+    <meta name="theme-color" content="#2563eb">
+    <link rel="icon" href="https://codoacademy.com/uploads/system/e7c3fb5390c74909db1bb3559b24007a.png" type="image/x-icon">
+	<link rel="apple-touch-icon" sizes="180x180" href="https://codoacademy.com/uploads/system/e7c3fb5390c74909db1bb3559b24007a.png">
     <style>
         :root {
             --primary: #2563eb;
@@ -217,16 +221,21 @@
 </head>
 <body>
     <div class="background"></div>
-    <div class="offline-container">
+    <main class="offline-container" role="alert" aria-live="polite">
         <div class="icon-container">
             <div class="icon-bg"></div>
-            <div class="icon">📡</div>
+            <div class="icon" aria-label="Offline">📡</div>
         </div>
         <h1>You're Offline</h1>
         <p>Don't worry! Your data is safe. Please check your internet connection and try again.</p>
-        <button class="retry-button" onclick="window.location.reload()">
+        <button class="retry-button" onclick="window.location.reload()" aria-label="Try to reconnect">
             Reconnect
         </button>
-    </div>
+    </main>
+    <noscript>
+        <div style="text-align:center; color:#b91c1c; margin-top:2rem;">
+            JavaScript is required for full functionality. Please enable JavaScript in your browser.
+        </div>
+    </noscript>
 </body>
 </html> 
