@@ -57,7 +57,6 @@ import axios from 'axios';
 import moment from 'moment';
 import { styled } from '@mui/material/styles';
 import NotificationCenter from './NotificationCenter';
-import DeleteDialog from './DeleteDialog';
 import playNotificationSound from '../utils/notificationSound';
 import generateDescription from '../utils/aiDescription';
 import { 
@@ -951,7 +950,7 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
           <Button
             {...buttonProps}
             startIcon={<DeleteIcon />}
-            onClick={() => handleDeleteClick(todo)}
+            onClick={() => handleDelete(todo)}
             variant="outlined"
             color="error"
           >
@@ -1589,89 +1588,48 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
           onClose={() => setEditDialogOpen(false)}
           maxWidth="sm"
           fullWidth
-          fullScreen={isMobile}
-          PaperProps={{
-            sx: {
-              borderRadius: { xs: 0, sm: 2 },
-              m: { xs: 0, sm: 2 },
-              height: { xs: '100%', sm: 'auto' }
-            }
-          }}
         >
           <form onSubmit={handleEditSubmit}>
-            <DialogTitle 
-              id="edit-todo-title"
-              sx={{
-                background: 'linear-gradient(45deg, #00A389 30%, #00BFA6 90%)',
-                color: 'white',
-                p: { xs: 2, sm: 3 },
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 1,
-                '& .MuiTypography-root': {
-                  fontSize: { xs: '1.2rem', sm: '1.5rem' },
-                  fontWeight: 500
-                }
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <EditIcon aria-hidden="true" />
-                <span>Edit Todo</span>
-              </Box>
+            <DialogTitle sx={{
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+              bgcolor: 'primary.main',
+              color: 'white',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              px: 3,
+              py: 2,
+              borderRadius: '8px 8px 0 0'
+            }}>
+              <Typography variant="h6" component="div">
+                Edit Todo
+              </Typography>
               <Button
                 type="submit"
                 variant="contained"
                 disabled={loading}
-                aria-label="Save changes"
                 sx={{
-                  borderRadius: 2,
-                  px: { xs: 2, sm: 3 },
-                  py: { xs: 1, sm: 1.5 },
-                  textTransform: 'none',
-                  fontWeight: 500,
                   bgcolor: 'white',
                   color: 'primary.main',
-                  fontSize: { xs: '0.875rem', sm: '1rem' },
                   '&:hover': {
-                    bgcolor: 'rgba(255, 255, 255, 0.9)',
+                    bgcolor: 'primary.dark'
                   }
                 }}
               >
-                {loading ? (
-                  <CircularProgress size={24} sx={{ color: 'primary.main' }} aria-label="Loading" />
-                ) : (
-                  'Save Changes'
-                )}
+                {loading ? <CircularProgress size={24} /> : 'Save Changes'}
               </Button>
             </DialogTitle>
-
-            <DialogContent 
-              sx={{ 
-                p: { xs: 2, sm: 3 },
-                height: { xs: 'calc(100vh - 70px)', sm: 'auto' },
-                overflowY: 'auto'
-              }}
-            >
+            <DialogContent sx={{ pt: 2, mt: 2 }}>
               <TextField
-                autoFocus
                 fullWidth
                 id="edit-todo-title"
                 label="Title"
-                placeholder="Enter a clear and specific task"
                 value={editTodo?.title || ''}
                 onChange={(e) => setEditTodo({ ...editTodo, title: e.target.value })}
                 required
-                sx={{ 
-                  mb: { xs: 2, sm: 3 },
-                  mt: 1,
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2
-                  }
-                }}
-                helperText="Be specific about what needs to be accomplished"
+                sx={{ mb: 2, mt: 2, borderRadius: 2 }}
               />
-
               <TextField
                 fullWidth
                 id="edit-todo-details"
@@ -1717,7 +1675,6 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
                   )
                 }}
               />
-
               <TextField
                 select
                 fullWidth
@@ -1725,68 +1682,134 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
                 label="Priority"
                 value={editTodo?.priority || 'medium'}
                 onChange={(e) => setEditTodo({ ...editTodo, priority: e.target.value })}
-                sx={{ 
-                  mb: { xs: 2, sm: 3 },
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2
-                  }
-                }}
-                helperText="Select the urgency level of this task"
+                sx={{ mb: 2, borderRadius: 2 }}
               >
                 {priorityOptions.map((option) => (
-                  <MenuItem
-                    key={option.value}
-                    value={option.value}
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1,
-                      py: 1.5
-                    }}
-                  >
-                    <Box
-                      aria-hidden="true"
-                      sx={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: '50%',
-                        backgroundColor: option.color,
-                        display: 'inline-block'
-                      }}
-                    />
+                  <MenuItem key={option.value} value={option.value}>
                     {option.label}
                   </MenuItem>
                 ))}
               </TextField>
-
               <TextField
                 fullWidth
                 id="edit-todo-due-date"
-                type="datetime-local"
                 label="Due Date"
+                type="datetime-local"
                 value={editTodo?.due_date || ''}
                 onChange={(e) => setEditTodo({ ...editTodo, due_date: e.target.value })}
                 InputLabelProps={{ shrink: true }}
-                helperText="When should this task be completed?"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2
-                  }
+                sx={{ borderRadius: 2 }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <CalendarTodayIcon />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <AccessTimeIcon />
+                    </InputAdornment>
+                  )
                 }}
               />
             </DialogContent>
           </form>
         </Dialog>
 
-        <DeleteDialog
+        {/* Delete Confirmation Dialog (Meets style) */}
+        <Dialog
           open={deleteDialogOpen}
           onClose={() => {
             setDeleteDialogOpen(false);
             setTodoToDelete(null);
           }}
-          onConfirm={handleConfirmDelete}
-          todoTitle={todoToDelete?.title || ''}
-        />
+          maxWidth="xs"
+          fullWidth
+          TransitionComponent={Fade}
+          transitionDuration={300}
+          PaperProps={{
+            elevation: 0,
+            sx: {
+              borderRadius: '12px',
+              overflow: 'hidden'
+            }
+          }}
+        >
+          <DialogTitle sx={{
+            bgcolor: '#dc3545',
+            color: 'white',
+            py: 2,
+            px: 3,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            fontSize: '1.1rem',
+            fontWeight: 500
+          }}>
+            <DeleteIcon fontSize="small" />
+            Delete Todo
+          </DialogTitle>
+
+          <DialogContent sx={{ p: 3 }}>
+            <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
+              Are you sure you want to delete this todo?
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              This action cannot be undone.
+            </Typography>
+            {todoToDelete?.title && (
+              <Typography variant="subtitle2" sx={{ mt: 2, color: 'text.secondary', fontWeight: 600, textAlign: 'center' }}>
+                "{todoToDelete.title}"
+              </Typography>
+            )}
+          </DialogContent>
+
+          <DialogActions sx={{
+            px: 3,
+            pb: 3,
+            gap: 1
+          }}>
+            <Button
+              onClick={() => {
+                setDeleteDialogOpen(false);
+                setTodoToDelete(null);
+              }}
+              variant="outlined"
+              sx={{
+                borderRadius: '8px',
+                textTransform: 'none',
+                px: 3,
+                py: 1,
+                color: 'text.primary',
+                borderColor: 'divider',
+                '&:hover': {
+                  borderColor: 'text.primary',
+                  bgcolor: 'action.hover'
+                }
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmDelete}
+              variant="contained"
+              color="error"
+              startIcon={<DeleteIcon />}
+              sx={{
+                borderRadius: '8px',
+                textTransform: 'none',
+                px: 3,
+                py: 1,
+                bgcolor: '#dc3545',
+                '&:hover': {
+                  bgcolor: '#c82333'
+                }
+              }}
+            >
+              Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
 
         <Snackbar
           open={snackbar.open}
