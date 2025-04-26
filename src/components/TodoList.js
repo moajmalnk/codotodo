@@ -1128,6 +1128,14 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
         }}
         maxWidth="sm"
         fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: { xs: 2, sm: 3 },
+            m: { xs: 0, sm: 2 },
+            width: '100%',
+            maxWidth: { xs: '100vw', sm: 500 },
+          }
+        }}
       >
         <DialogTitle sx={{ 
           bgcolor: 'primary.main',
@@ -1135,14 +1143,15 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
           display: 'flex',
           alignItems: 'center',
           gap: 1,
-          px: 3,
-          py: 2
+          px: { xs: 2, sm: 3 },
+          py: { xs: 1.5, sm: 2 },
+          fontSize: { xs: '1.1rem', sm: '1.25rem' },
         }}>
-          <AddTaskIcon />
+          <AddTaskIcon sx={{ fontSize: { xs: '1.2rem', sm: '1.5rem' } }} />
           Add New Todo
         </DialogTitle>
 
-        <DialogContent sx={{ mt: 2, px: 3, py: 2, pt: '12px'}}>
+        <DialogContent sx={{ mt: 2, px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 2 }, pt: '12px'}}>
           <TextField
             fullWidth
             required
@@ -1150,11 +1159,11 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
             placeholder="Enter todo title"
             value={formData.title}
             onChange={handleInputChange('title')}
-            sx={{ mb: 3 }}
+            sx={{ mb: 3, fontSize: { xs: '0.95rem', sm: '1rem' } }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <TitleIcon sx={{ color: 'text.secondary' }} />
+                  <TitleIcon sx={{ color: 'text.secondary', fontSize: { xs: '1.1rem', sm: '1.3rem' } }} />
                 </InputAdornment>
               ),
             }}
@@ -1162,18 +1171,17 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
 
           <TextField
             fullWidth
-            required
             multiline
             rows={4}
             label="Description"
             placeholder="Add any important details or context"
             value={formData.description}
             onChange={handleInputChange('description')}
-            sx={{ mb: 3 }}
+            sx={{ mb: 3, fontSize: { xs: '0.95rem', sm: '1rem' } }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 2 }}>
-                  <DescriptionIcon sx={{ color: 'text.secondary' }} />
+                  <DescriptionIcon sx={{ color: 'text.secondary', fontSize: { xs: '1.1rem', sm: '1.3rem' } }} />
                 </InputAdornment>
               ),
             }}
@@ -1186,17 +1194,17 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
             label="Priority"
             value={formData.priority}
             onChange={handleInputChange('priority')}
-            sx={{ mb: 3 }}
+            sx={{ mb: 3, fontSize: { xs: '0.95rem', sm: '1rem' } }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <FlagIcon sx={{ color: 'text.secondary' }} />
+                  <FlagIcon sx={{ color: 'text.secondary', fontSize: { xs: '1.1rem', sm: '1.3rem' } }} />
                 </InputAdornment>
               ),
             }}
           >
             {priorityOptions.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
+              <MenuItem key={option.value} value={option.value} sx={{ fontSize: { xs: '0.95rem', sm: '1rem' } }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Box
                     sx={{
@@ -1223,7 +1231,7 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <CalendarTodayIcon sx={{ color: 'text.secondary' }} />
+                  <CalendarTodayIcon sx={{ color: 'text.secondary', fontSize: { xs: '1.1rem', sm: '1.3rem' } }} />
                 </InputAdornment>
               ),
             }}
@@ -1231,14 +1239,15 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
         </DialogContent>
 
         <DialogActions sx={{ 
-          px: 3, 
-          py: 2,
-          gap: 1
+          px: { xs: 2, sm: 3 }, 
+          py: { xs: 1.5, sm: 2 },
+          gap: 1,
+          flexDirection: { xs: 'column', sm: 'row' },
         }}>
           <Button
             variant="outlined"
             onClick={onClose}
-            sx={{ flex: 1 }}
+            sx={{ flex: 1, width: { xs: '100%', sm: 'auto' }, mb: { xs: 1, sm: 0 } }}
           >
             Cancel
           </Button>
@@ -1248,6 +1257,7 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
             disabled={!isValidTodo()}
             sx={{ 
               flex: 1,
+              width: { xs: '100%', sm: 'auto' },
               bgcolor: 'success.main',
               '&:hover': {
                 bgcolor: 'success.dark'
