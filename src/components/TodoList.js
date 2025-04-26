@@ -213,12 +213,15 @@ const TodoList = () => {
   };
 
   const showNotification = (title, message, priority = 'medium') => {
-    // Browser notification
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(title, {
-        body: message,
-        icon: '/favicon.ico'
-      });
+    try {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(title, {
+          body: message,
+          icon: '/favicon.ico'
+        });
+      }
+    } catch (e) {
+      // Optionally log or ignore
     }
 
     // Web app notification
