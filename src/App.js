@@ -8,6 +8,7 @@ import Meets from './components/Meets';
 import Login from './components/Login';
 import { GlobalProvider } from './context/GlobalContext';
 import './styles.css';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 const theme = createTheme({
   palette: {
@@ -122,6 +123,8 @@ function App() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
 
+  const isMobile = useMediaQuery('(max-width:600px)');
+
   useEffect(() => {
     const handleStorageChange = async () => {
       try {
@@ -179,18 +182,7 @@ function App() {
 
   // Don't render anything while initializing
   if (isInitializing) {
-    return (
-      <div style={{
-        width: '100vw',
-        height: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: '#f0f3ff'
-      }}>
-        <span style={{ color: '#00b764', fontWeight: 600, fontSize: 24 }}>Loading...</span>
-      </div>
-    );
+    return null;
   }
 
   return (
@@ -199,7 +191,10 @@ function App() {
         <CssBaseline />
         <Router>
           {isLoggedIn && <Navbar />}
-          <div className={isLoggedIn ? "blur-content" : ""} style={{ paddingTop: isLoggedIn ? '64px' : 0 }}>
+          <div
+            className={isLoggedIn ? "blur-content" : ""}
+            style={{ paddingTop: isLoggedIn ? (isMobile ? '56px' : '64px') : 0 }}
+          >
             <Routes>
               <Route 
                 path="/login" 
