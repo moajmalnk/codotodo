@@ -256,7 +256,7 @@ const Login = () => {
                   onChange={(e) => setOtp(e.target.value)}
                   onKeyPress={handleKeyPress}
                   type="number"
-                  placeholder="Enter 995559"
+                  placeholder="Enter OTP"
                   required
                   error={otp && otp !== VALID_OTP}
                   helperText={otp && otp !== VALID_OTP ? 'Please enter valied OTP' : ''}
