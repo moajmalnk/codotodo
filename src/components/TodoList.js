@@ -1522,11 +1522,13 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
                           height: { xs: '24px', sm: '32px' },
                           '& .MuiChip-label': {
                             px: { xs: 1, sm: 1.5 },
-                            fontSize: { xs: '0.75rem', sm: '0.8125rem' }
+                            fontSize: { xs: '0.75rem', sm: '0.8125rem' },
+                            color: '#2e7d32'
                           },
                           '& .MuiChip-icon': {
                             ml: { xs: 0.5, sm: 0.75 }
-                          }
+                          },
+                          border: '1.5px solid #2e7d32'
                         }}
                       />
                       <Typography 
@@ -1844,6 +1846,8 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
                   sx={{ 
                     fontWeight: 'bold',
                     bgcolor: 'white',
+                    color: '#2e7d32',
+                    border: '1.5px solid #2e7d32',
                     '& .MuiChip-label': { px: 2 }
                   }}
                 />

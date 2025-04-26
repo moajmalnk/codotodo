@@ -16,6 +16,8 @@ import axios from 'axios';
 import moment from 'moment';
 import playNotificationSound from '../utils/notificationSound';
 
+const API_URL = 'https://todobackend.moajmalnk.in/api/notifications.php';
+
 const NotificationCenter = () => {
     const [notifications, setNotifications] = useState([]);
     const [anchorEl, setAnchorEl] = useState(null);
@@ -23,7 +25,9 @@ const NotificationCenter = () => {
 
     const fetchNotifications = async () => {
         try {
-            const response = await axios.get('https://todobackend.moajmalnk.in/api/notifications.php');
+            const response = await axios.get(API_URL, {
+                headers: { 'Accept': 'application/json' }
+            });
             setNotifications(response.data);
         } catch (error) {
             console.error('Error fetching notifications:', error);
@@ -32,11 +36,13 @@ const NotificationCenter = () => {
 
     const createNotification = async (title, message, priority = 'medium') => {
         try {
-            await axios.post('https://todobackend.moajmalnk.in/api/notifications.php', {
+            await axios.post(API_URL, {
                 title,
                 message,
                 priority,
                 status: 'unread'
+            }, {
+                headers: { 'Content-Type': 'application/json' }
             });
             await playNotificationSound();
             fetchNotifications();
@@ -55,7 +61,11 @@ const NotificationCenter = () => {
         // Event listener for todo actions
         const handleTodoAction = (event) => {
             const { title, message, priority } = event.detail;
-            createNotification(title, message, priority);
+            if (title && message) {
+                createNotification(title, message, priority);
+            } else {
+                console.warn('Notification event missing title or message:', event.detail);
+            }
         };
 
         window.addEventListener('todoAction', handleTodoAction);
@@ -77,7 +87,9 @@ const NotificationCenter = () => {
 
     const markAsRead = async (id) => {
         try {
-            await axios.put('https://todobackend.moajmalnk.in/api/notifications.php', { id });
+            await axios.put(API_URL, { id }, {
+                headers: { 'Content-Type': 'application/json' }
+            });
             fetchNotifications();
         } catch (error) {
             console.error('Error marking notification as read:', error);
