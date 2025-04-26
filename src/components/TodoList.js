@@ -302,7 +302,7 @@ const TodoList = () => {
   const handleStatusChange = async (todoId, newStatus) => {
     try {
       await axios.post(`${API_URL}/todos.php`, {
-        action: 'update',
+        action: 'updateStatus',
         id: todoId,
         status: newStatus
       });
@@ -737,49 +737,34 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
       
       // Log the request data for debugging
       console.log('Updating todo:', {
+        action: 'updateStatus',
         id: todo.id,
-        status: newStatus,
-        currentTodo: todo
+        status: newStatus
       });
 
-      // Create form data with minimal required fields
-      const formData = new FormData();
-      formData.append('id', todo.id);
-      formData.append('status', newStatus);
-
-      // Make the API call
-      const response = await fetch(`${API_URL}/todos.php?action=update`, {
-        method: 'POST',
-        body: formData
+      // Make the API call using axios
+      const response = await axios.post(`${API_URL}/todos.php`, {
+        action: 'updateStatus',
+        id: todo.id,
+        status: newStatus
       });
 
-      // Log the response for debugging
-      const responseText = await response.text();
-      console.log('API Response:', responseText);
-
-      try {
-        const data = JSON.parse(responseText);
+      if (response.data.status === 'success') {
+        // Update local state
+        setTodos(prevTodos => 
+          prevTodos.map(t => 
+            t.id === todo.id ? {...t, status: newStatus} : t
+          )
+        );
         
-        if (data.status === 'success') {
-          // Update local state
-          setTodos(prevTodos => 
-            prevTodos.map(t => 
-              t.id === todo.id ? {...t, status: newStatus} : t
-            )
-          );
-          
-          if (selectedTodo && selectedTodo.id === todo.id) {
-            setSelectedTodo(prev => ({...prev, status: newStatus}));
-          }
-          
-          showSnackbar(`Todo marked as ${newStatus}`, 'success');
-          setDetailsDialog(false);
-        } else {
-          throw new Error(data.message || 'Failed to update status');
+        if (selectedTodo && selectedTodo.id === todo.id) {
+          setSelectedTodo(prev => ({...prev, status: newStatus}));
         }
-      } catch (parseError) {
-        console.error('Error parsing response:', parseError);
-        throw new Error('Invalid response from server');
+        
+        showSnackbar(`Todo marked as ${newStatus}`, 'success');
+        setDetailsDialog(false);
+      } else {
+        throw new Error(response.data.message || 'Failed to update status');
       }
     } catch (error) {
       console.error('Error updating todo status:', error);
@@ -795,49 +780,75 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
   };
 
   const handleStatusUpdate = async () => {
+    if (!todoToUpdate) return;
+
     try {
+      // Convert status to the correct format
       const newStatus = todoToUpdate.status === 'completed' ? 'pending' : 'completed';
       
-      // Send POST request instead of PATCH
-      const response = await axios.post(`${API_URL}/todos.php`, {
-        action: 'update',
-        id: todoToUpdate.id,
+      // Create the request payload
+      const payload = {
+        action: 'updateStatus',
+        id: parseInt(todoToUpdate.id), // Ensure ID is a number
         status: newStatus,
-        remarks: statusRemarks
-      });
+        remarks: statusRemarks || ''
+      };
 
-      if (response.data.message === "Todo status updated successfully.") {
+      // Debug log
+      console.log('Sending status update with payload:', payload);
+      
+      const response = await axios.post(`${API_URL}/todos.php`, payload);
+
+      // Debug log
+      console.log('Received response:', response.data);
+
+      if (response.data.status === 'success') {
         // Update local state
-        setTodos(prevTodos => 
-          prevTodos.map(t => 
-            t.id === todoToUpdate.id ? {...t, status: newStatus, remarks: statusRemarks} : t
+        setTodos(prevTodos =>
+          prevTodos.map(todo =>
+            todo.id === todoToUpdate.id
+              ? { ...todo, status: newStatus }
+              : todo
           )
         );
-        
+
+        // Show success notification
         showSnackbar(`Todo marked as ${newStatus}`, 'success');
+
+        // Close dialog and reset state
         setStatusUpdateDialog(false);
-        setStatusRemarks('');
         setTodoToUpdate(null);
+        setStatusRemarks('');
         
-        // Refresh todos list to ensure we have the latest data
+        // Refresh todos list
         fetchTodos();
       } else {
-        throw new Error('Failed to update status');
+        throw new Error(response.data.message || 'Failed to update status');
       }
     } catch (error) {
       console.error('Error updating todo status:', error);
-      showSnackbar('Failed to update todo status', 'error');
+      console.error('Error details:', error.response?.data || error.message);
+      showSnackbar(error.response?.data?.message || 'Failed to update todo status', 'error');
     }
   };
 
   const fetchStatusHistory = async (todoId) => {
     try {
-      const response = await axios.get(`${API_URL}/todos.php?action=getRemarks&id=${todoId}`);
+      const response = await axios.get(`${API_URL}/todos-history.php`, {
+        params: { id: todoId },
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      
       if (response.data) {
-      setStatusHistory(response.data);
+        setStatusHistory(response.data);
       }
     } catch (error) {
       console.error('Error fetching status history:', error);
+      showSnackbar('Failed to fetch status history', 'error');
+      setStatusHistory([]);
     }
   };
 
