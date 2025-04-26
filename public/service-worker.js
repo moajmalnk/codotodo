@@ -12,64 +12,79 @@ const STATIC_ASSETS = [
 
 // Install Service Worker
 self.addEventListener('install', (event) => {
+  // Force waiting service worker to become active
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => {
-        return cache.addAll(STATIC_ASSETS);
-      })
+      .then((cache) => cache.addAll(STATIC_ASSETS))
+      .catch((err) => console.error('SW install error:', err))
   );
 });
 
 // Activate Service Worker
 self.addEventListener('activate', (event) => {
+  // Take control of all clients immediately
+  self.clients.claim();
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
+    caches.keys().then((cacheNames) =>
+      Promise.all(
         cacheNames
           .filter((cacheName) => cacheName !== CACHE_NAME)
           .map((cacheName) => caches.delete(cacheName))
-      );
-    })
+      )
+    )
   );
 });
 
 // Fetch Event Strategy
 self.addEventListener('fetch', (event) => {
+  // Only handle GET requests
+  if (event.request.method !== 'GET') return;
+
   event.respondWith(
     caches.match(event.request)
-      .then((response) => {
-        // Return cached version if found
-        if (response) {
-          return response;
-        }
+      .then((cachedResponse) => {
+        if (cachedResponse) return cachedResponse;
 
-        // Clone the request
+        // Clone the request for fetch and cache
         const fetchRequest = event.request.clone();
 
-        // Try to fetch new version
         return fetch(fetchRequest)
-          .then((response) => {
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
+          .then((networkResponse) => {
+            // Only cache valid responses (status 200, basic type)
+            if (
+              !networkResponse ||
+              networkResponse.status !== 200 ||
+              networkResponse.type !== 'basic'
+            ) {
+              return networkResponse;
             }
 
-            // Clone the response
-            const responseToCache = response.clone();
+            // Clone response for cache
+            const responseToCache = networkResponse.clone();
 
-            // Add new version to cache
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                cache.put(event.request, responseToCache);
-              });
+            // Use waitUntil to ensure cache put completes
+            event.waitUntil(
+              caches.open(CACHE_NAME)
+                .then((cache) => cache.put(event.request, responseToCache))
+                .catch((err) => console.error('SW cache put error:', err))
+            );
 
-            return response;
+            return networkResponse;
           })
           .catch(() => {
-            // If fetch fails, return offline page
+            // Offline fallback for navigation requests
             if (event.request.mode === 'navigate') {
               return caches.match('/offline.html');
             }
           });
+      })
+      .catch((err) => {
+        console.error('SW fetch error:', err);
+        // Optionally, fallback to offline page
+        if (event.request.mode === 'navigate') {
+          return caches.match('/offline.html');
+        }
       })
   );
 }); 
