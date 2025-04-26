@@ -158,7 +158,7 @@ const StyledTabs = styled(Tabs)(({ theme }) => ({
     gap: theme.spacing(0.5),
     display: 'flex',
     alignItems: 'center',
-    marginTop: '2px !important',
+    marginTop: '4px !important',
   },
   '& .MuiTabs-indicator': {
     display: 'none',
@@ -638,11 +638,13 @@ const Navbar = ({ todos, onFilterChange }) => {
 
   return (
     <>
-      <StyledAppBar position="fixed">
+      <StyledAppBar position="fixed" sx={{
+        boxShadow: { xs: '0 2px 8px rgba(0,0,0,0.06)', sm: 'none' },
+      }}>
         <Toolbar sx={{ 
           minHeight: { xs: 56, sm: 64 }, 
-          px: { xs: 1, sm: 2 },
-          gap: { xs: 1, sm: 2 }
+          px: { xs: 0.5, sm: 2 },
+          gap: { xs: 0.5, sm: 2 },
         }}>
           <Box 
             component="img"
@@ -650,11 +652,13 @@ const Navbar = ({ todos, onFilterChange }) => {
             alt="CODO Todo"
             sx={{ 
               display: { xs: 'none', sm: 'block' },
-              mr: 0,
-              height: '40px',
+              mr: { xs: 0, sm: 0 },
+              height: { xs: '32px', sm: '40px' },
               width: 'auto',
               objectFit: 'contain',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              minWidth: 0,
+              p: 0,
             }}
             onClick={() => window.location.reload()}
           />
@@ -663,9 +667,12 @@ const Navbar = ({ todos, onFilterChange }) => {
             sx={{
               width: { xs: '100%', sm: 'auto' },
               minWidth: 0,
-              overflowX: { xs: 'auto', sm: 'visible' },
               flex: { xs: 1, sm: 'unset' },
               mr: { xs: 0.5, sm: 2 },
+              overflowX: { xs: 'auto', sm: 'visible' },
+              '& .MuiTabs-root': {
+                minWidth: 0,
+              },
             }}
           >
             <StyledTabs
@@ -678,6 +685,8 @@ const Navbar = ({ todos, onFilterChange }) => {
                 '& .MuiTabs-flexContainer': {
                   gap: { xs: 0.25, sm: 0.5 },
                 },
+                overflowX: { xs: 'auto', sm: 'visible' },
+                minWidth: 0,
               }}
             >
               {menuItems.map((item) => (
@@ -707,27 +716,11 @@ const Navbar = ({ todos, onFilterChange }) => {
             </StyledTabs>
           </TabsWrapper>
 
-          {/* Mobile Search Button */}
-          <Box sx={{ display: { xs: 'block', sm: 'none' } }}>
-            <SearchButton
-              color="inherit"
-              onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
-            >
-              {mobileSearchOpen ? (
-                <CloseIcon fontSize="small" />
-              ) : (
-                <SearchIcon fontSize="small" />
-              )}
-            </SearchButton>
-          </Box>
-
           {/* Search Field */}
           <Box sx={{ 
-            display: { 
-              xs: mobileSearchOpen ? 'block' : 'none', 
-              sm: 'block' 
-            },
+            display: { xs: 'none', sm: 'block' },
             flexGrow: 1,
+            minWidth: 0,
           }}>
             <SearchWrapper>
               <SearchTextField
@@ -736,6 +729,7 @@ const Navbar = ({ todos, onFilterChange }) => {
                 onChange={handleSearchChange}
                 fullWidth
                 inputRef={searchInputRef}
+                sx={{ minWidth: 0 }}
               />
               {searchTerm && (
                 <ClearIconButton
@@ -743,11 +737,12 @@ const Navbar = ({ todos, onFilterChange }) => {
                     setSearchTerm('');
                     handleSearchChange({ target: { value: '' } });
                   }}
+                  sx={{ minWidth: 36, minHeight: 36 }}
                 >
                   <CloseIcon />
                 </ClearIconButton>
               )}
-              <SearchIconButton>
+              <SearchIconButton sx={{ minWidth: 36, minHeight: 36 }}>
                 <SearchIcon />
               </SearchIconButton>
             </SearchWrapper>
@@ -757,7 +752,9 @@ const Navbar = ({ todos, onFilterChange }) => {
           <Box sx={{ 
             display: 'flex', 
             gap: { xs: 0.5, sm: 1 },
-            alignItems: 'center'
+            alignItems: 'center',
+            minWidth: 0,
+            ml: { xs: 0.5, sm: 1 },
           }}>
             <NotificationCenter />
             <Tooltip title={isPrivacyMode ? "Disable Privacy Mode" : "Enable Privacy Mode"}>
@@ -765,7 +762,7 @@ const Navbar = ({ todos, onFilterChange }) => {
                 onClick={handlePrivacyToggle}
                 active={isPrivacyMode ? 1 : 0}
                 aria-label="Toggle privacy mode"
-                sx={{ display: { xs: 'flex', sm: 'flex', md: 'none' } }}
+                sx={{ display: { xs: 'flex', sm: 'flex', md: 'none' }, minWidth: 36, minHeight: 36 }}
               >
                 {isPrivacyMode ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
               </PrivacyButton>
@@ -784,6 +781,7 @@ const Navbar = ({ todos, onFilterChange }) => {
                   '&:hover': {
                     bgcolor: isFiltersActive ? 'primary.dark' : 'action.hover',
                   },
+                  minWidth: 36, minHeight: 36
                 }}
               >
                 <FilterListIcon fontSize="small" />
@@ -811,7 +809,8 @@ const Navbar = ({ todos, onFilterChange }) => {
                   },
                   '& .MuiButton-startIcon': {
                     marginRight: { xs: 0.5, sm: 1 }
-                  }
+                  },
+                  minWidth: 36, minHeight: 36
                 }}
               >
                 <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>Create</Box>
@@ -823,6 +822,7 @@ const Navbar = ({ todos, onFilterChange }) => {
               <LogoutButton
                 onClick={handleLogoutClick}
                 aria-label="Logout"
+                sx={{ minWidth: 36, minHeight: 36 }}
               >
                 <LogoutIcon fontSize="small" />
               </LogoutButton>
