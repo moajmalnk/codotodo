@@ -35,7 +35,8 @@ import {
   Link,
   Stack,
   AvatarGroup,
-  useMediaQuery
+  useMediaQuery,
+  Fab
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -2177,6 +2178,18 @@ const Meets = () => {
     return () => window.removeEventListener('filterChange', handleFilter);
   }, []);
 
+  const handleCopyPendingMeets = () => {
+    const pendingMeets = meets.filter(meet => meet.status === 0);
+    if (pendingMeets.length === 0) {
+      showSnackbar('No pending meets to copy', 'info');
+      return;
+    }
+    const formatted = pendingMeets.map(formatMeetContent).join('\n\n');
+    navigator.clipboard.writeText(formatted)
+      .then(() => showSnackbar('Pending meets copied to clipboard!', 'success'))
+      .catch(() => showSnackbar('Failed to copy meets', 'error'));
+  };
+
   return (
     <ErrorBoundary>
       <Box sx={{
@@ -2604,6 +2617,23 @@ const Meets = () => {
         </Dialog>
 
         {renderViewDialog()}
+
+        <Tooltip title="Copy all pending meets">
+          <Fab
+            color="primary"
+            aria-label="copy"
+            sx={{
+              position: 'fixed',
+              bottom: 24,
+              right: 24,
+              zIndex: 2000,
+              boxShadow: 4,
+            }}
+            onClick={handleCopyPendingMeets}
+          >
+            <ContentCopyIcon />
+          </Fab>
+        </Tooltip>
       </Box>
     </ErrorBoundary>
   );

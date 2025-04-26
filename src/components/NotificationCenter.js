@@ -79,13 +79,7 @@ const NotificationCenter = () => {
 
     useEffect(() => {
         if ('Notification' in window && Notification.permission !== 'granted') {
-            Notification.requestPermission().then(permission => {
-                if (permission === 'granted') {
-                    console.log('Notification permission granted!');
-                } else {
-                    console.log('Notification permission denied.');
-                }
-            });
+            Notification.requestPermission();
         }
     }, []);
 
@@ -113,8 +107,9 @@ const NotificationCenter = () => {
     if ('Notification' in window && Notification.permission === 'granted') {
         new Notification('Todo Added', {
             body: 'Your new todo was added successfully!',
-            icon: '/favicon.ico' // or any icon you want
+            icon: '/favicon.ico'
         });
+        playNotificationSound();
     }
 
     return (

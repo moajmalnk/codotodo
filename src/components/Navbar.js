@@ -587,8 +587,10 @@ const Navbar = ({ todos, onFilterChange }) => {
               mr: 4,
               height: '40px',
               width: 'auto',
-              objectFit: 'contain'
+              objectFit: 'contain',
+              cursor: 'pointer'
             }}
+            onClick={() => window.location.reload()}
           />
 
           <TabsWrapper>

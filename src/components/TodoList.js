@@ -25,6 +25,7 @@ import {
   InputAdornment,
   Skeleton,
   Fade,
+  Fab,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -1261,6 +1262,18 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
     );
   };
 
+  const handleCopyPendingTodos = () => {
+    const pendingTodos = todos.filter(todo => todo.status === 'pending');
+    if (pendingTodos.length === 0) {
+      showSnackbar('No pending todos to copy', 'info');
+      return;
+    }
+    const formatted = pendingTodos.map(formatTodoContent).join('\n\n');
+    navigator.clipboard.writeText(formatted)
+      .then(() => showSnackbar('Pending todos copied to clipboard!', 'success'))
+      .catch(() => showSnackbar('Failed to copy todos', 'error'));
+  };
+
   try {
     return (
       <Box sx={{
@@ -2149,6 +2162,23 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
             </Button>
           </DialogActions>
         </Dialog>
+
+        <Tooltip title="Copy all pending todos">
+          <Fab
+            color="primary"
+            aria-label="copy"
+            sx={{
+              position: 'fixed',
+              bottom: 24,
+              right: 24,
+              zIndex: 2000,
+              boxShadow: 4,
+            }}
+            onClick={handleCopyPendingTodos}
+          >
+            <ContentCopyIcon />
+          </Fab>
+        </Tooltip>
       </Box>
     );
   } catch (error) {
