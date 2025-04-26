@@ -1247,16 +1247,16 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
   try {
     return (
       <Box sx={{
-        p: 3,
-        mt: 0  // Changed from mt: 8 to mt: 0
+        p: { xs: 1, sm: 2, md: 3 },  // Responsive padding
+        mt: 0
       }}>
         <Box sx={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          mb: 3,
+          mb: { xs: 2, sm: 3 },  // Responsive margin
           flexWrap: { xs: 'wrap', sm: 'nowrap' },
-          gap: 2
+          gap: { xs: 1, sm: 2 }
         }}>
           <Typography
             variant="h5"
@@ -1266,24 +1266,24 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
               alignItems: 'center',
               gap: 1,
               fontWeight: 500,
-              fontSize: { xs: '1.2rem', sm: '1.5rem' },
-              mt: 3
+              fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' },
+              mt: { xs: 1, sm: 2, md: 3 }
             }}
           >
-                Todo List
+            Todo List
             <Chip
               label={todos.length}
               color="primary"
-              size="small"
+              size={isMobile ? "small" : "medium"}
               sx={{
                 borderRadius: '12px',
                 backgroundColor: 'primary.main',
                 color: 'white',
                 fontWeight: 'bold',
-                fontSize: { xs: '0.8rem', sm: '1rem' },
+                fontSize: { xs: '0.75rem', sm: '0.875rem', md: '1rem' }
               }}
             />
-              </Typography>
+          </Typography>
         </Box>
 
         {isInitialLoad ? (
@@ -1294,15 +1294,22 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
           <Fade in={true}>
             <Paper
               sx={{
-                p: 4,
+                p: { xs: 2, sm: 3, md: 4 },
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: 2,
+                gap: { xs: 1, sm: 2 },
                 bgcolor: 'background.default'
               }}
             >
-              <Typography variant="h6" color="text.secondary">
+              <Typography 
+                variant="h6" 
+                color="text.secondary"
+                sx={{
+                  fontSize: { xs: '1rem', sm: '1.25rem' },
+                  textAlign: 'center'
+                }}
+              >
                 No todos found matching your criteria
               </Typography>
               <Button
@@ -1312,7 +1319,8 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
                 sx={{
                   textTransform: 'none',
                   borderRadius: 20,
-                  px: 3
+                  px: { xs: 2, sm: 3 },
+                  py: { xs: 1, sm: 1.5 }
                 }}
               >
                 Create Todo
@@ -1321,12 +1329,28 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
           </Fade>
         ) : (
           <Fade in={true}>
-            <Grid container spacing={{ xs: 2, sm: 2, md: 3 }} sx={{ mt: 1 }}>
+            <Grid 
+              container 
+              spacing={{ xs: 1.5, sm: 2, md: 3 }} 
+              sx={{ mt: { xs: 0.5, sm: 1 } }}
+            >
               {filteredTodos.map((todo) => (
                 <Grid item xs={12} sm={6} md={4} lg={3} key={todo.id}>
                   <TodoItem 
                     elevation={1}
                     onClick={() => handleCardClick(todo)}
+                    sx={{
+                      height: '100%',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease-in-out',
+                      '&:hover': {
+                        transform: { xs: 'none', sm: 'translateY(-3px)' },
+                        boxShadow: { xs: 'none', sm: '0 8px 24px rgba(0,0,0,0.1)' }
+                      },
+                      '&:active': {
+                        transform: { xs: 'scale(0.98)', sm: 'none' }
+                      }
+                    }}
                   >
                     <Chip
                       label={todo.priority}
@@ -1533,16 +1557,12 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
           onClose={() => setEditDialogOpen(false)}
           maxWidth="sm"
           fullWidth
-          aria-labelledby="edit-todo-title"
+          fullScreen={isMobile}
           PaperProps={{
-            elevation: 0,
             sx: {
-              borderRadius: { xs: '12px 12px 0 0', sm: 2 },
-              margin: { xs: 0, sm: 2 },
-              maxHeight: { xs: '100%', sm: '90vh' },
-              position: { xs: 'absolute', sm: 'relative' },
-              bottom: { xs: 0, sm: 'auto' },
-              width: '100%'
+              borderRadius: { xs: 0, sm: 2 },
+              m: { xs: 0, sm: 2 },
+              height: { xs: '100%', sm: 'auto' }
             }
           }}
         >
@@ -1745,7 +1765,12 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
             horizontal: 'center'
           }}
           sx={{
-            bottom: { xs: 16, sm: 24 }
+            bottom: { xs: 70, sm: 24 },  // Adjusted to avoid bottom navigation on mobile
+            width: { xs: '100%', sm: 'auto' },
+            '& .MuiSnackbarContent-root': {
+              width: { xs: '100%', sm: 'auto' },
+              borderRadius: { xs: 0, sm: 1 }
+            }
           }}
         >
           <Alert
@@ -1761,13 +1786,21 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
         </Snackbar>
 
         <Dialog
-          open={detailsDialog && selectedTodo !== null} 
+          open={detailsDialog && selectedTodo !== null}
           onClose={() => {
             setDetailsDialog(false);
             setSelectedTodo(null);
           }}
           maxWidth="md"
           fullWidth
+          fullScreen={isMobile}
+          PaperProps={{
+            sx: {
+              borderRadius: { xs: 0, sm: 2 },
+              m: { xs: 0, sm: 2 },
+              height: { xs: '100%', sm: 'auto' }
+            }
+          }}
         >
           {selectedTodo && (
             <>
@@ -2039,6 +2072,14 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
           onClose={() => setStatusUpdateDialog(false)}
           maxWidth="sm"
           fullWidth
+          fullScreen={isMobile}
+          PaperProps={{
+            sx: {
+              borderRadius: { xs: 0, sm: 2 },
+              m: { xs: 0, sm: 2 },
+              height: { xs: '100%', sm: 'auto' }
+            }
+          }}
         >
           <DialogTitle sx={{ 
             bgcolor: 'primary.main',
