@@ -51,6 +51,7 @@ import { format, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import LogoutIcon from '@mui/icons-material/Logout';
+import NotificationCenter from './NotificationCenter';
 
 // Styled components
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
@@ -736,6 +737,7 @@ const Navbar = ({ todos, onFilterChange }) => {
             gap: { xs: 0.5, sm: 1 },
             alignItems: 'center'
           }}>
+            <NotificationCenter />
             <Tooltip title={isPrivacyMode ? "Disable Privacy Mode" : "Enable Privacy Mode"}>
               <PrivacyButton
                 onClick={handlePrivacyToggle}

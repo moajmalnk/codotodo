@@ -7,7 +7,6 @@ import TodoList from './components/TodoList';
 import Meets from './components/Meets';
 import Login from './components/Login';
 import { GlobalProvider } from './context/GlobalContext';
-import NotificationCenter from './components/NotificationCenter';
 import './styles.css';
 
 const theme = createTheme({
@@ -187,7 +186,6 @@ function App() {
     <GlobalProvider>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <NotificationCenter />
         <Router>
           {isLoggedIn && <Navbar />}
           <div className={isLoggedIn ? "blur-content" : ""} style={{ paddingTop: isLoggedIn ? '64px' : 0 }}>

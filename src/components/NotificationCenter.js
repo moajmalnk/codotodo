@@ -7,6 +7,7 @@ import {
     Typography,
     Box,
     Divider,
+    Button,
 } from '@mui/material';
 import {
     Notifications as NotificationsIcon,
@@ -102,6 +103,17 @@ const NotificationCenter = () => {
         }
     };
 
+    const markAllAsRead = async () => {
+        try {
+            await axios.put(API_URL, { all: true }, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            fetchNotifications();
+        } catch (error) {
+            console.error('Error marking all notifications as read:', error);
+        }
+    };
+
     const unreadCount = notifications.filter(n => n.status === 'unread').length;
 
     if ('Notification' in window && Notification.permission === 'granted') {
@@ -135,8 +147,18 @@ const NotificationCenter = () => {
                     },
                 }}
             >
-                <Box sx={{ p: 2 }}>
+                <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Typography variant="h6">Notifications</Typography>
+                    <Button
+                        size="small"
+                        variant="text"
+                        color="primary"
+                        disabled={notifications.filter(n => n.status === 'unread').length === 0}
+                        onClick={markAllAsRead}
+                        sx={{ ml: 1, fontSize: '0.85rem', textTransform: 'none', fontWeight: 500 }}
+                    >
+                        Mark All as Read
+                    </Button>
                 </Box>
                 <Divider />
 
@@ -177,7 +199,6 @@ const NotificationCenter = () => {
                 )}
             </Menu>
 
-            <button onClick={() => Notification.requestPermission()}>Enable Notifications</button>
         </>
     );
 };
