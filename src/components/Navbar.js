@@ -584,7 +584,7 @@ const Navbar = ({ todos, onFilterChange }) => {
             alt="CODO Todo"
             sx={{ 
               display: { xs: 'none', sm: 'block' },
-              mr: 4,
+              mr: 0,
               height: '40px',
               width: 'auto',
               objectFit: 'contain',
