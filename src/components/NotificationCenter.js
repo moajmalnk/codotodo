@@ -121,7 +121,7 @@ const NotificationCenter = () => {
             <IconButton
                 onClick={handleClick}
                 size="large"
-                sx={{ ml: 2 }}
+                sx={{ ml: '-16px' }}
             >
                 <Badge badgeContent={unreadCount} color="error">
                     {unreadCount > 0 ? <NotificationsIcon /> : <NotificationsNoneIcon />}
