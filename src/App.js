@@ -119,6 +119,8 @@ const ProtectedRoute = ({ children }) => {
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
 
   useEffect(() => {
     const handleStorageChange = async () => {
@@ -144,6 +146,26 @@ function App() {
       window.removeEventListener('loginStateChange', handleStorageChange);
     };
   }, []);
+
+  useEffect(() => {
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBanner(true);
+    });
+  }, []);
+
+  const handleInstallClick = () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          // User accepted the install
+        }
+        setShowInstallBanner(false);
+      });
+    }
+  };
 
   // Don't render anything while initializing
   if (isInitializing) {
@@ -190,6 +212,16 @@ function App() {
               />
             </Routes>
           </div>
+          {showInstallBanner && (
+            <div style={{
+              position: 'fixed', bottom: 0, left: 0, right: 0, background: '#2563eb', color: 'white', padding: 16, textAlign: 'center', zIndex: 2000
+            }}>
+              <span>Install CODO Todo for the best experience!</span>
+              <button onClick={handleInstallClick} style={{ marginLeft: 16, padding: '8px 16px', background: 'white', color: '#2563eb', border: 'none', borderRadius: 8, fontWeight: 600 }}>
+                Install App
+              </button>
+            </div>
+          )}
         </Router>
       </ThemeProvider>
     </GlobalProvider>

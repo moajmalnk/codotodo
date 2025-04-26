@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -367,6 +367,7 @@ const Navbar = ({ todos, onFilterChange }) => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+  const searchInputRef = useRef(null);
 
   const menuItems = [
     { text: 'Todos', icon: <AssignmentIcon />, path: '/todos' },
@@ -568,7 +569,58 @@ const Navbar = ({ todos, onFilterChange }) => {
 
   const handleLogoutCancel = () => {
     setLogoutDialogOpen(false);
-  };
+  };  
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      // Ctrl + Space: Privacy mode
+      if (event.ctrlKey && event.code === 'Space') {
+        event.preventDefault();
+        handlePrivacyToggle();
+        return;
+      }
+      // Ctrl + Shift + F: Toggle filter drawer
+      if (event.ctrlKey && event.shiftKey && event.code === 'KeyF') {
+        event.preventDefault();
+        setFilterDrawerOpen((prev) => !prev);
+        return;
+      }
+      // Ctrl + Shift + S: Focus search input
+      if (event.ctrlKey && event.shiftKey && event.code === 'KeyS') {
+        event.preventDefault();
+        if (searchInputRef.current) {
+          searchInputRef.current.focus();
+        }
+        return;
+      }
+      // Alt + T: Go to Todos page
+      if (event.altKey && event.code === 'KeyT') {
+        event.preventDefault();
+        navigate('/todos');
+        return;
+      }
+      // Alt + M: Go to Meets page
+      if (event.altKey && event.code === 'KeyM') {
+        event.preventDefault();
+        navigate('/meets');
+        return;
+      }
+      // Space + T: Create Todo
+      if (event.code === 'KeyT' && event.getModifierState(' ')) {
+        event.preventDefault();
+        handleOpenCreateTodo();
+        return;
+      }
+      // Space + M: Create Meet
+      if (event.code === 'KeyM' && event.getModifierState(' ')) {
+        event.preventDefault();
+        handleOpenCreateMeet();
+        return;
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handlePrivacyToggle, navigate]);
 
   return (
     <>
@@ -647,6 +699,7 @@ const Navbar = ({ todos, onFilterChange }) => {
                 value={searchTerm}
                 onChange={handleSearchChange}
                 fullWidth
+                inputRef={searchInputRef}
               />
               {searchTerm && (
                 <ClearIconButton
