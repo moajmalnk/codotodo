@@ -659,12 +659,26 @@ const Navbar = ({ todos, onFilterChange }) => {
             onClick={() => window.location.reload()}
           />
 
-          <TabsWrapper>
-            <StyledTabs 
-              value={activeTab} 
+          <TabsWrapper
+            sx={{
+              width: { xs: '100%', sm: 'auto' },
+              minWidth: 0,
+              overflowX: { xs: 'auto', sm: 'visible' },
+              flex: { xs: 1, sm: 'unset' },
+              mr: { xs: 0.5, sm: 2 },
+            }}
+          >
+            <StyledTabs
+              value={activeTab}
               onChange={handleTabChange}
               variant="scrollable"
               scrollButtons={false}
+              sx={{
+                minHeight: { xs: 36, sm: 40 },
+                '& .MuiTabs-flexContainer': {
+                  gap: { xs: 0.25, sm: 0.5 },
+                },
+              }}
             >
               {menuItems.map((item) => (
                 <StyledTab
@@ -673,13 +687,21 @@ const Navbar = ({ todos, onFilterChange }) => {
                   icon={item.icon}
                   iconPosition="start"
                   disableRipple
-                  sx={(theme) => ({
+                  sx={{
+                    padding: { xs: '4px 8px', sm: '6px 16px' },
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    minWidth: { xs: 60, sm: 'auto' },
                     '& .MuiSvgIcon-root': {
-                      color: item.text === 'Todos' && activeTab === 0 ? '#00A76F' : 
-                             item.text === 'Meets' && activeTab === 1 ? '#00A76F' : 'inherit',
+                      color:
+                        item.text === 'Todos' && activeTab === 0
+                          ? '#00A76F'
+                          : item.text === 'Meets' && activeTab === 1
+                          ? '#00A76F'
+                          : 'inherit',
                       transition: 'color 0.2s ease-in-out',
-                    }
-                  })}
+                      fontSize: { xs: '1rem', sm: '1.25rem' },
+                    },
+                  }}
                 />
               ))}
             </StyledTabs>

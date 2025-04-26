@@ -193,7 +193,11 @@ function App() {
           {isLoggedIn && <Navbar />}
           <div
             className={isLoggedIn ? "blur-content" : ""}
-            style={{ paddingTop: isLoggedIn ? (isMobile ? '56px' : '64px') : 0 }}
+            style={{ 
+              paddingTop: isLoggedIn ? (isMobile ? '56px' : '64px') : 0,
+              minHeight: isLoggedIn ? `calc(100vh - ${(isMobile ? 56 : 64)}px)` : '100vh',
+              background: isMobile ? '#f0f3ff' : undefined
+            }}
           >
             <Routes>
               <Route 
