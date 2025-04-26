@@ -578,21 +578,18 @@ const Navbar = ({ todos, onFilterChange }) => {
           px: { xs: 1, sm: 2 },
           gap: { xs: 1, sm: 2 }
         }}>
-          <Typography 
-            variant="h6" 
-            component="div" 
+          <Box 
+            component="img"
+            src="https://codoacademy.com/uploads/system/e7c3fb5390c74909db1bb3559b24007a.png"
+            alt="CODO Todo"
             sx={{ 
               display: { xs: 'none', sm: 'block' },
               mr: 4,
-              fontWeight: 600,
-              background: 'linear-gradient(45deg,rgb(33, 243, 138) 30%, #21CBF3 90%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              fontSize: { xs: '1.1rem', sm: '1.25rem' }
+              height: '40px',
+              width: 'auto',
+              objectFit: 'contain'
             }}
-          >
-            CODO Todo
-          </Typography>
+          />
 
           <TabsWrapper>
             <StyledTabs 

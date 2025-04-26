@@ -50,6 +50,7 @@ import {
   AddTask as AddTaskIcon,
   Title as TitleIcon,
   Description as DescriptionIcon,
+  Cancel as CancelIcon,
 } from '@mui/icons-material';
 import axios from 'axios';
 import moment from 'moment';
@@ -861,6 +862,11 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const handleCancel = () => {
+    setDetailsDialog(false);
+    setSelectedTodo(null);
+  };
+
   const ActionButtons = ({ todo, isMobile }) => {
     const buttonProps = {
       size: isMobile ? 'small' : 'medium',
@@ -893,6 +899,17 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
           }
         }}
       >
+        <Tooltip title="Cancel">
+          <Button
+            {...buttonProps}
+            startIcon={<CancelIcon />}
+            onClick={handleCancel}
+            variant="outlined"
+            color="secondary"
+          >
+            {!isMobile && "Cancel"}
+          </Button>
+        </Tooltip>
         <Tooltip title="Copy">
           <Button
             {...buttonProps}
