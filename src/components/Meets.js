@@ -100,6 +100,7 @@ import TimelineDot from '@mui/lab/TimelineDot';
 import TimelineOppositeContent from '@mui/lab/TimelineOppositeContent';
 import LinkIcon from '@mui/icons-material/Link';
 import { useLocation } from 'react-router-dom';
+import CancelIcon from '@mui/icons-material/Cancel';
 
 // Initialize dayjs plugins
 dayjs.extend(weekOfYear);
@@ -192,7 +193,7 @@ const MeetCard = styled(Paper)(({ theme }) => ({
   borderRadius: '16px',
   backgroundColor: theme.palette.background.paper,
   '&:hover': {
-    transform: 'translateY(-4px)',
+    transform: 'translateY(-3px)',
     boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
   }
 }));
@@ -230,14 +231,14 @@ const LoadingSkeleton = () => (
 
           {/* Date and Time */}
           <Box sx={{ mb: 2 }}>
-            <Skeleton 
-              variant="rectangular" 
-              width={120} 
-              height={32} 
-              sx={{ 
+            <Skeleton
+              variant="rectangular"
+              width={120}
+              height={32}
+              sx={{
                 borderRadius: 1,
                 bgcolor: (theme) => alpha(theme.palette.success.main, 0.1)
-              }} 
+              }}
             />
           </Box>
 
@@ -254,7 +255,7 @@ const LoadingSkeleton = () => (
           </Box>
 
           {/* Attendees Section */}
-          <Box sx={{ 
+          <Box sx={{
             pt: 2,
             borderTop: '1px solid',
             borderColor: 'divider',
@@ -398,11 +399,11 @@ const ActionButton = styled(Button)(({ theme }) => ({
 const MeetStatusChip = styled(Chip)(({ theme, statusvalue }) => ({
   borderRadius: '12px',
   height: '24px',
-  backgroundColor: statusvalue === 1 
-    ? theme.palette.success.light 
+  backgroundColor: statusvalue === 1
+    ? theme.palette.success.light
     : theme.palette.warning.light,
-  color: statusvalue === 1 
-    ? theme.palette.success.dark 
+  color: statusvalue === 1
+    ? theme.palette.success.dark
     : theme.palette.warning.dark,
   '& .MuiChip-label': {
     fontSize: '0.75rem',
@@ -663,13 +664,13 @@ const Meets = () => {
       if (showLoadingState && !isLoadMore) {
         setLoading(true);
       }
-      
+
       const response = await axios.get(`${API_URL}/meets.php`);
-      
+
       if (response.data) {
         const formattedMeets = Array.isArray(response.data) ? response.data : [];
         setMeets(formattedMeets);
-        
+
         // Update cache
         localStorage.setItem('cachedMeets', JSON.stringify({
           data: formattedMeets,
@@ -740,7 +741,7 @@ const Meets = () => {
         setOpenDialog(false);
         setViewDialogOpen(false);
         setSelectedMeet(null);
-        
+
         // Reset form
         setMeetingTitle('');
         setMeetingTime(new Date());
@@ -781,11 +782,11 @@ const Meets = () => {
     setMeetLink(meet.meet_link || defaultMeetLink);
     setAgenda(meet.agenda || '');
     setAttendees(meet.attendees || '');
-    
+
     // Set edit mode and selected meet
     setEditMode(true);
     setSelectedMeet(meet);
-    
+
     // Close view dialog and open edit dialog
     setViewDialogOpen(false);
     setOpenDialog(true);
@@ -793,7 +794,7 @@ const Meets = () => {
 
   const handleUpdate = async (e) => {
     e.preventDefault();
-    
+
     try {
       if (!selectedMeet?.id || !meetingTitle || !meetingTime || !meetLink) {
         throw new Error('Please fill in all required fields');
@@ -812,8 +813,8 @@ const Meets = () => {
       const response = await axios.put(`${API_URL}/meets.php`, meetData);
 
       if (response.data?.success) {
-        setMeets(prevMeets => 
-          prevMeets.map(meet => 
+        setMeets(prevMeets =>
+          prevMeets.map(meet =>
             meet.id === selectedMeet.id ? { ...meet, ...meetData } : meet
           )
         );
@@ -857,7 +858,7 @@ const Meets = () => {
 
         // Update local state
         setMeets(prevMeets => prevMeets.filter(meet => meet.id !== selectedMeet.id));
-        
+
         // Bottom popup notification (Snackbar)
         const event = new CustomEvent('showToast', {
           detail: {
@@ -875,7 +876,7 @@ const Meets = () => {
       }
     } catch (error) {
       console.error('Error deleting meet:', error);
-      
+
       // Error bottom popup notification
       const event = new CustomEvent('showToast', {
         detail: {
@@ -951,7 +952,7 @@ const Meets = () => {
         meet.attendees
       ].filter(Boolean).join(' ').toLowerCase();
 
-      const matchesSearch = !searchTerm || 
+      const matchesSearch = !searchTerm ||
         searchFields.includes(searchTerm.toLowerCase());
 
       const matchesDueDate = dueDate === 'all' ||
@@ -1118,7 +1119,7 @@ const Meets = () => {
     }
 
     if (status !== 'all') {
-      filtered = filtered.filter(meet => 
+      filtered = filtered.filter(meet =>
         status === 'completed' ? meet.status === 1 : meet.status === 0
       );
     }
@@ -1215,7 +1216,7 @@ const Meets = () => {
       if (!meetToUpdate) return;
 
       const newStatus = meetToUpdate.status === 1 ? 0 : 1;
-      
+
       // First update the local state immediately
       setMeets(prevMeets =>
         prevMeets.map(meet =>
@@ -1287,7 +1288,7 @@ const Meets = () => {
   // Enhanced meeting reminder system
   const checkUpcomingMeetings = async () => {
     const now = moment();
-    
+
     meets.forEach(async (meet) => {
       if (!meet.status) {
         const meetingTime = moment(meet.meeting_time);
@@ -1348,8 +1349,7 @@ const Meets = () => {
   const formatMeetContent = (meet) => {
     const formattedDate = moment(meet.meeting_time).format('DD/MM/YYYY');
     const formattedTime = moment(meet.meeting_time).format('hh:mm A');
-    const status = meet.status ? '✅ Completed' : '⏳ Pending';
-    
+
     return `📅 Meeting Details
 ━━━━━━━━━━━━━━━━━━━━━
 📌 Title: ${meet.meeting_title}
@@ -1358,7 +1358,6 @@ const Meets = () => {
 🔗 Meet Link: ${meet.meet_link}
 🗓️ Date: ${formattedDate}
 ⏰ Time: ${formattedTime}
-${status}
 ━━━━━━━━━━━━━━━━━━━━━
 
 🎯 Don't forget to join on time!`;
@@ -1383,15 +1382,15 @@ ${status}
       {selectedMeet && (
         <>
           <DetailHeader>
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
+            <Box sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
               alignItems: 'center',
-              mb: 2 
+              mb: 2
             }}>
-              <Typography 
-                variant="overline" 
-                sx={{ 
+              <Typography
+                variant="overline"
+                sx={{
                   opacity: 0.9,
                   letterSpacing: '0.1em',
                   fontWeight: 500
@@ -1403,7 +1402,7 @@ ${status}
                 label={selectedMeet.status === 1 ? "Completed" : "Pending"}
                 statusvalue={selectedMeet.status}
                 size="small"
-                sx={{ 
+                sx={{
                   borderRadius: '12px',
                   px: 2,
                   '& .MuiChip-label': {
@@ -1412,9 +1411,9 @@ ${status}
                 }}
               />
             </Box>
-            <Typography 
-              variant="h5" 
-              sx={{ 
+            <Typography
+              variant="h5"
+              sx={{
                 fontWeight: 600,
                 lineHeight: 1.3,
                 mb: 1
@@ -1434,10 +1433,10 @@ ${status}
                     <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                       Schedule
                     </Typography>
-                    <Typography 
-                      variant="body1" 
+                    <Typography
+                      variant="body1"
                       fontWeight={500}
-                      sx={{ 
+                      sx={{
                         wordBreak: 'break-word',
                         [theme.breakpoints.down('sm')]: {
                           fontSize: '0.875rem'
@@ -1455,9 +1454,9 @@ ${status}
                     <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                       Agenda
                     </Typography>
-                    <Typography 
-                      variant="body1" 
-                      sx={{ 
+                    <Typography
+                      variant="body1"
+                      sx={{
                         whiteSpace: 'pre-wrap',
                         wordBreak: 'break-word',
                         [theme.breakpoints.down('sm')]: {
@@ -1480,7 +1479,7 @@ ${status}
                       href={selectedMeet.meet_link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      sx={{ 
+                      sx={{
                         wordBreak: 'break-all',
                         display: 'flex',
                         alignItems: 'center',
@@ -1504,14 +1503,14 @@ ${status}
 
               <Grid item xs={12} md={4}>
                 {/* Attendees Section */}
-                <Paper sx={{ 
-                  p: { xs: 1.5, sm: 2 }, 
+                <Paper sx={{
+                  p: { xs: 1.5, sm: 2 },
                   bgcolor: 'background.default',
                   borderRadius: 2
                 }}>
-                  <Typography 
-                    variant="subtitle2" 
-                    sx={{ 
+                  <Typography
+                    variant="subtitle2"
+                    sx={{
                       mb: 2,
                       display: 'flex',
                       alignItems: 'center',
@@ -1522,7 +1521,7 @@ ${status}
                     <PeopleAltIcon sx={{ fontSize: '1.2rem' }} />
                     Attendees
                   </Typography>
-                  <Stack 
+                  <Stack
                     spacing={1}
                     sx={{
                       maxHeight: { xs: '150px', sm: '200px' },
@@ -1535,14 +1534,14 @@ ${status}
                       .map((attendee, index) => {
                         const trimmedAttendee = attendee.trim();
                         const initial = trimmedAttendee ? trimmedAttendee[0].toUpperCase() : '?';
-                        
+
                         return (
                           <Chip
                             key={index}
                             label={trimmedAttendee}
                             size="small"
                             avatar={
-                              <Avatar sx={{ 
+                              <Avatar sx={{
                                 bgcolor: `primary.${index % 3 ? 'light' : 'main'}`,
                                 width: { xs: 24, sm: 32 },
                                 height: { xs: 24, sm: 32 }
@@ -1550,7 +1549,7 @@ ${status}
                                 {initial}
                               </Avatar>
                             }
-                            sx={{ 
+                            sx={{
                               borderRadius: '8px',
                               '& .MuiChip-label': {
                                 px: 1,
@@ -1570,9 +1569,9 @@ ${status}
               <StatusTimelineHeader>
                 <HistoryIcon />
                 <Box>
-                  <Typography 
-                    variant="h6" 
-                    sx={{ 
+                  <Typography
+                    variant="h6"
+                    sx={{
                       fontWeight: 600,
                       fontSize: { xs: '1.1rem', sm: '1.25rem' },
                       lineHeight: 1.2
@@ -1580,8 +1579,8 @@ ${status}
                   >
                     Status History
                   </Typography>
-                  <Typography 
-                    variant="caption" 
+                  <Typography
+                    variant="caption"
                     color="text.secondary"
                     sx={{ display: 'block', mt: 0.5 }}
                   >
@@ -1590,8 +1589,8 @@ ${status}
                 </Box>
               </StatusTimelineHeader>
 
-              <Timeline 
-                sx={{ 
+              <Timeline
+                sx={{
                   p: 0,
                   m: 0,
                   '& .MuiTimelineItem-root:before': {
@@ -1601,7 +1600,7 @@ ${status}
                 }}
               >
                 {statusHistory.map((history, index) => (
-                  <TimelineItem 
+                  <TimelineItem
                     key={index}
                     sx={{
                       minHeight: 'auto',
@@ -1616,25 +1615,25 @@ ${status}
                           margin: '6px 0',
                           padding: '4px',
                           boxShadow: 'none',
-                          ...(history.status === 'COMPLETED' 
+                          ...(history.status === 'COMPLETED'
                             ? {
-                                bgcolor: 'success.light',
-                                borderColor: 'success.main'
-                              }
+                              bgcolor: 'success.light',
+                              borderColor: 'success.main'
+                            }
                             : {
-                                bgcolor: 'warning.light',
-                                borderColor: 'warning.main'
-                              }
+                              bgcolor: 'warning.light',
+                              borderColor: 'warning.main'
+                            }
                           )
                         }}
                       >
-                        {history.status === 'COMPLETED' 
+                        {history.status === 'COMPLETED'
                           ? <CheckCircleIcon sx={{ fontSize: '1rem', color: 'success.main' }} />
                           : <PendingIcon sx={{ fontSize: '1rem', color: 'warning.main' }} />
                         }
                       </TimelineDot>
-                      <TimelineConnector 
-                        sx={{ 
+                      <TimelineConnector
+                        sx={{
                           bgcolor: 'divider',
                           width: '1px'
                         }}
@@ -1666,7 +1665,7 @@ ${status}
                             borderRadius: '6px',
                             fontWeight: 500,
                             fontSize: '0.75rem',
-                            bgcolor: history.status === 'COMPLETED' 
+                            bgcolor: history.status === 'COMPLETED'
                               ? alpha(theme.palette.success.main, 0.1)
                               : alpha(theme.palette.warning.main, 0.1),
                             color: history.status === 'COMPLETED'
@@ -1679,9 +1678,9 @@ ${status}
                         />
                       </Box>
 
-                      <Typography 
-                        variant="caption" 
-                        sx={{ 
+                      <Typography
+                        variant="caption"
+                        sx={{
                           color: 'text.secondary',
                           display: 'flex',
                           alignItems: 'center',
@@ -1697,8 +1696,8 @@ ${status}
               </Timeline>
 
               {statusHistory.length === 0 && (
-                <Box 
-                  sx={{ 
+                <Box
+                  sx={{
                     textAlign: 'center',
                     py: 4,
                     color: 'text.secondary'
@@ -1714,33 +1713,83 @@ ${status}
           </DetailContent>
 
           {/* Action Buttons */}
-          <DialogActions sx={{ 
-            p: { xs: 1.5, sm: 3 }, 
-            bgcolor: 'background.default',
-            borderTop: '1px solid',
-            borderColor: 'divider',
-            gap: { xs: 0.5, sm: 1 },
-            flexWrap: 'wrap',
-            '& .MuiButton-root': {
-              fontSize: { xs: '0.75rem', sm: '0.875rem' },
-              padding: { xs: '4px 8px', sm: '6px 16px' }
-            }
-          }}>
+          <DialogActions 
+            sx={{
+              p: { xs: 1, sm: 1.5, md: 2 },
+              bgcolor: 'background.default',
+              borderTop: '1px solid',
+              borderColor: 'divider',
+              gap: { xs: 0.5, sm: 0.75, md: 1 },
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-start',
+              overflowX: 'auto',
+              overflowY: 'hidden',
+              msOverflowStyle: 'none',
+              scrollbarWidth: 'none',
+              '&::-webkit-scrollbar': {
+                display: 'none'
+              },
+              '& .MuiButton-root': {
+                minWidth: { xs: '40px', sm: 'auto' },
+                height: { xs: '36px', sm: '38px', md: '40px' },
+                fontSize: {
+                  xs: '0.75rem',
+                  sm: '0.8125rem',
+                  md: '0.875rem'
+                },
+                px: {
+                  xs: 1,
+                  sm: 1.5,
+                  md: 2
+                },
+                whiteSpace: 'nowrap',
+                flex: { xs: '0 0 auto', md: '1 1 auto' },
+                '& .MuiSvgIcon-root': {
+                  fontSize: {
+                    xs: '1.1rem',
+                    sm: '1.2rem',
+                    md: '1.25rem'
+                  },
+                  mr: { xs: '-3px', sm: 0.75, md: 1 }
+                }
+              }
+            }}
+          >
+            <ActionButton
+              variant="outlined"
+              color="secondary"
+              startIcon={<CancelIcon />}
+              onClick={() => handleCloseDialog()}
+              sx={{
+                '& .MuiButton-startIcon': {
+                  display: 'flex',
+                  mr: { xs: '-3px', sm: 0.5, md: 0.75 }
+                }
+              }}
+            >
+              <Box sx={{ display: { xs: 'none', sm: 'block' } }}>Close</Box>
+            </ActionButton>
+
             <ActionButton
               variant="outlined"
               color="inherit"
               startIcon={<ContentCopyIcon />}
               onClick={() => handleCopy(selectedMeet)}
-              sx={{ 
+              sx={{
                 color: 'text.secondary',
                 borderColor: 'divider',
                 '&:hover': {
                   bgcolor: 'grey.100',
                   borderColor: 'grey.400'
+                },
+                '& .MuiButton-startIcon': {
+                  display: 'flex',
+                  mr: { xs: '-3px', sm: 0.5, md: 0.75 }
                 }
               }}
             >
-              Copy
+              <Box sx={{ display: { xs: 'none', sm: 'block' } }}>Copy</Box>
             </ActionButton>
 
             <ActionButton
@@ -1748,8 +1797,14 @@ ${status}
               color="info"
               startIcon={<ShareIcon />}
               onClick={() => handleShare(selectedMeet)}
+              sx={{
+                '& .MuiButton-startIcon': {
+                  display: 'flex',
+                  mr: { xs: '-3px', sm: 0.5, md: 0.75 }
+                }
+              }}
             >
-              Share
+              <Box sx={{ display: { xs: 'none', sm: 'block' } }}>Share</Box>
             </ActionButton>
 
             <ActionButton
@@ -1759,8 +1814,14 @@ ${status}
               onClick={() => {
                 handleEdit(selectedMeet);
               }}
+              sx={{
+                '& .MuiButton-startIcon': {
+                  display: 'flex',
+                  mr: { xs: '-3px', sm: 0.5, md: 0.75 }
+                }
+              }}
             >
-              Edit
+              <Box sx={{ display: { xs: 'none', sm: 'block' } }}>Edit</Box>
             </ActionButton>
 
             <ActionButton
@@ -1768,8 +1829,14 @@ ${status}
               color="error"
               startIcon={<DeleteIcon />}
               onClick={() => handleDeleteClick(selectedMeet)}
+              sx={{
+                '& .MuiButton-startIcon': {
+                  display: 'flex',
+                  mr: { xs: '-3px', sm: 0.5, md: 0.75 }
+                }
+              }}
             >
-              Delete
+              <Box sx={{ display: { xs: 'none', sm: 'block' } }}>Delete</Box>
             </ActionButton>
 
             <ActionButton
@@ -1777,14 +1844,22 @@ ${status}
               color={selectedMeet.status === 1 ? "success" : "inherit"}
               startIcon={selectedMeet.status === 1 ? <PendingIcon /> : <CheckCircleIcon />}
               onClick={() => handleCompletedClick(selectedMeet)}
-              sx={selectedMeet.status === 1 ? {
-                bgcolor: 'success.main',
-                '&:hover': {
-                  bgcolor: 'success.dark'
-                }
-              } : {}}
+              sx={{
+                '& .MuiButton-startIcon': {
+                  display: 'flex',
+                  mr: { xs: '-3px', sm: 0.5, md: 0.75 }
+                },
+                ...(selectedMeet.status === 1 ? {
+                  bgcolor: 'success.main',
+                  '&:hover': {
+                    bgcolor: 'success.dark'
+                  }
+                } : {})
+              }}
             >
-              {selectedMeet.status === 1 ? "Mark as Pending" : "Mark as Completed"}
+              <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+                {selectedMeet.status === 1 ? "Pending" : "Completed"}
+              </Box>
             </ActionButton>
 
             <ActionButton
@@ -1792,15 +1867,18 @@ ${status}
               color="primary"
               startIcon={<VideocamIcon />}
               onClick={() => window.open(selectedMeet.meet_link, '_blank')}
-              sx={{ 
-                ml: 'auto',
+              sx={{
                 bgcolor: theme.palette.primary.main,
                 '&:hover': {
                   bgcolor: theme.palette.primary.dark,
+                },
+                '& .MuiButton-startIcon': {
+                  display: 'flex',
+                  mr: { xs: '-3px', sm: 0.5, md: 0.75 }
                 }
               }}
             >
-              Join Meet
+              <Box sx={{ display: { xs: 'none', sm: 'block' } }}>Join</Box>
             </ActionButton>
           </DialogActions>
         </>
@@ -1836,8 +1914,8 @@ ${status}
         </Typography>
 
         {/* Date and Time */}
-        <Box 
-          sx={{ 
+        <Box
+          sx={{
             display: 'flex',
             alignItems: 'center',
             gap: 1,
@@ -1848,15 +1926,15 @@ ${status}
             width: 'fit-content'
           }}
         >
-          <CalendarTodayIcon 
-            sx={{ 
+          <CalendarTodayIcon
+            sx={{
               fontSize: '1rem',
               color: 'success.main'
-            }} 
+            }}
           />
-          <Typography 
+          <Typography
             variant="caption"
-            sx={{ 
+            sx={{
               color: 'success.main',
               fontWeight: 500
             }}
@@ -1872,11 +1950,11 @@ ${status}
             label={meet.status === 1 ? "Completed" : "Pending"}
             size="small"
             sx={{
-              backgroundColor: meet.status === 1 
+              backgroundColor: meet.status === 1
                 ? alpha(theme.palette.success.main, 0.1)
                 : alpha(theme.palette.warning.main, 0.1),
-              color: meet.status === 1 
-                ? theme.palette.success.main 
+              color: meet.status === 1
+                ? theme.palette.success.main
                 : theme.palette.warning.main,
               fontWeight: 500,
               fontSize: '0.75rem',
@@ -1885,10 +1963,10 @@ ${status}
               }
             }}
           />
-          <Typography 
-            variant="caption" 
+          <Typography
+            variant="caption"
             color="text.secondary"
-            sx={{ 
+            sx={{
               display: 'flex',
               alignItems: 'center',
               gap: 0.5
@@ -1916,7 +1994,7 @@ ${status}
 
         {/* Attendees */}
         {meet.attendees && (
-          <Box sx={{ 
+          <Box sx={{
             pt: 2,
             borderTop: '1px solid',
             borderColor: 'divider',
@@ -1924,7 +2002,7 @@ ${status}
             alignItems: 'center',
             justifyContent: 'space-between'
           }}>
-            <AvatarGroup 
+            <AvatarGroup
               max={3}
               sx={{
                 '& .MuiAvatar-root': {
@@ -1940,11 +2018,11 @@ ${status}
                 .map((attendee, index) => {
                   const trimmedAttendee = attendee.trim();
                   const initial = trimmedAttendee ? trimmedAttendee[0].toUpperCase() : '?';
-                  
+
                   return (
-                    <Avatar 
+                    <Avatar
                       key={index}
-                      sx={{ 
+                      sx={{
                         bgcolor: theme => `${theme.palette.primary.main}${index % 2 ? '99' : 'CC'}`
                       }}
                     >
@@ -1953,9 +2031,9 @@ ${status}
                   );
                 })}
             </AvatarGroup>
-            
-            <Typography 
-              variant="caption" 
+
+            <Typography
+              variant="caption"
               color="text.secondary"
               sx={{
                 display: 'flex',
@@ -1976,7 +2054,7 @@ ${status}
   const handleViewOpen = async (meet) => {
     setSelectedMeet(meet);
     setViewDialogOpen(true);
-    
+
     // Fetch status history if needed
     fetchStatusHistory(meet.id);
   };
@@ -1992,7 +2070,7 @@ ${status}
       const response = await axios.get(`${API_URL}/meets-history.php`, {
         params: { id: meetId },
       });
-      
+
       if (response.data) {
         setStatusHistory(response.data);
       }
@@ -2101,27 +2179,27 @@ ${status}
 
   return (
     <ErrorBoundary>
-      <Box sx={{ 
+      <Box sx={{
         p: 3,
-        mt: 8,
+        mt: 0,
         '& *::before, & *::after': {
           borderTop: 'none !important',
           borderBottom: 'none !important'
         }
       }}>
-        <Box sx={{ 
-          display: 'flex', 
+        <Box sx={{
+          display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           mb: 3,
           flexWrap: { xs: 'wrap', sm: 'nowrap' },
           gap: 2
         }}>
-          <Typography 
-            variant="h5" 
-            component="h1" 
-            sx={{ 
-              display: 'flex', 
+          <Typography
+            variant="h5"
+            component="h1"
+            sx={{
+              display: 'flex',
               alignItems: 'center',
               gap: 1,
               fontWeight: 500,
@@ -2130,11 +2208,11 @@ ${status}
             }}
           >
             Meet List
-            <Chip 
-              label={meets.length} 
-              color="primary" 
+            <Chip
+              label={meets.length}
+              color="primary"
               size="small"
-              sx={{ 
+              sx={{
                 borderRadius: '12px',
                 backgroundColor: 'primary.main',
                 color: 'white',
@@ -2167,8 +2245,8 @@ ${status}
               <Typography color="text.secondary" align="center">
                 Start by creating your first meeting
               </Typography>
-              <Box sx={{ 
-                display: 'flex', 
+              <Box sx={{
+                display: 'flex',
                 justifyContent: { xs: 'stretch', sm: 'flex-start' },
                 mb: { xs: 2, sm: 3 },
                 mt: { xs: 1, sm: 2 },
@@ -2222,13 +2300,13 @@ ${status}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <VideocamIcon 
+                        <VideocamIcon
                           color="primary"
-                          sx={{ 
+                          sx={{
                             opacity: 0.8,
                             transition: 'opacity 0.2s',
                             '&:hover': { opacity: 1 }
-                          }} 
+                          }}
                         />
                       </InputAdornment>
                     )
@@ -2247,11 +2325,11 @@ ${status}
                   }}
                 />
                 {/* Optional helper text */}
-                <Typography 
-                  variant="caption" 
+                <Typography
+                  variant="caption"
                   color="text.secondary"
-                  sx={{ 
-                    display: 'block', 
+                  sx={{
+                    display: 'block',
                     mt: 0.5,
                     ml: 1,
                     fontSize: { xs: '0.7rem', sm: '0.75rem' }
@@ -2337,7 +2415,7 @@ ${status}
                   multiple
                   freeSolo
                   options={suggestedAttendees}
-                  getOptionLabel={(option) => 
+                  getOptionLabel={(option) =>
                     typeof option === 'string' ? option : option.email
                   }
                   value={attendees.split(',').filter(a => a.trim())}
@@ -2384,7 +2462,7 @@ ${status}
                               bgcolor: typeof option === 'string' ? 'primary.main' : option.color
                             }}
                           >
-                            {typeof option === 'string' 
+                            {typeof option === 'string'
                               ? option[0].toUpperCase()
                               : option.name[0].toUpperCase()
                             }
@@ -2442,8 +2520,8 @@ ${status}
         </AddMeetingDialog>
 
         {/* Delete Confirmation Dialog */}
-        <Dialog 
-          open={deleteConfirmOpen} 
+        <Dialog
+          open={deleteConfirmOpen}
           onClose={() => setDeleteConfirmOpen(false)}
           maxWidth="xs"
           fullWidth
@@ -2471,7 +2549,7 @@ ${status}
             <DeleteIcon fontSize="small" />
             Delete Meeting
           </DialogTitle>
-          
+
           <DialogContent sx={{ p: 3 }}>
             <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
               Are you sure you want to delete this meeting?
@@ -2480,13 +2558,13 @@ ${status}
               This action cannot be undone.
             </Typography>
           </DialogContent>
-          
-          <DialogActions sx={{ 
-            px: 3, 
+
+          <DialogActions sx={{
+            px: 3,
             pb: 3,
             gap: 1
           }}>
-            <Button 
+            <Button
               onClick={() => setDeleteConfirmOpen(false)}
               variant="outlined"
               sx={{
@@ -2504,7 +2582,7 @@ ${status}
             >
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={handleDeleteConfirm}
               variant="contained"
               color="error"

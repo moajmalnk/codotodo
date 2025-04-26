@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -369,7 +369,6 @@ const Navbar = ({ todos, onFilterChange }) => {
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
 
   const menuItems = [
-    { text: 'Home', icon: <HomeIcon />, path: '/' },
     { text: 'Todos', icon: <AssignmentIcon />, path: '/todos' },
     { text: 'Meets', icon: <VideocamIcon />, path: '/meets' },
   ];
@@ -379,6 +378,15 @@ const Navbar = ({ todos, onFilterChange }) => {
     const path = menuItems[newValue].path;
     navigate(path);
   };
+
+  // Set initial active tab based on current path
+  useEffect(() => {
+    const currentPath = location.pathname;
+    const tabIndex = menuItems.findIndex(item => item.path === currentPath);
+    if (tabIndex !== -1) {
+      setActiveTab(tabIndex);
+    }
+  }, [location.pathname]);
 
   const handleClearFilters = () => {
     setSearchTerm('');
@@ -602,9 +610,8 @@ const Navbar = ({ todos, onFilterChange }) => {
                   disableRipple
                   sx={(theme) => ({
                     '& .MuiSvgIcon-root': {
-                      color: item.text === 'Home' && activeTab === 0 ? '#00A76F' : 
-                             item.text === 'Todos' && activeTab === 1 ? '#00A76F' : 
-                             item.text === 'Meets' && activeTab === 2 ? '#00A76F' : 'inherit',
+                      color: item.text === 'Todos' && activeTab === 0 ? '#00A76F' : 
+                             item.text === 'Meets' && activeTab === 1 ? '#00A76F' : 'inherit',
                       transition: 'color 0.2s ease-in-out',
                     }
                   })}

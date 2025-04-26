@@ -169,14 +169,6 @@ function App() {
                 } 
               />
               <Route
-                path="/"
-                element={
-                  <ProtectedRoute>
-                    <TodoList />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
                 path="/todos"
                 element={
                   <ProtectedRoute>

@@ -68,6 +68,7 @@ import {
   TimelineOppositeContent 
 } from '@mui/lab';
 import { API_URL } from '../config/constants';
+import { alpha } from '@mui/material/styles';
 
 const CustomGrid = styled(Grid)(({ theme }) => ({
   '@media (min-width: 0px)': {
@@ -78,20 +79,23 @@ const CustomGrid = styled(Grid)(({ theme }) => ({
 }));
 
 const TodoItem = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(2),
   height: '100%',
-  display: 'flex',
-  flexDirection: 'column',
-  transition: 'all 0.3s ease',
+  padding: theme.spacing(2.5),
+  paddingTop: '30px',
   cursor: 'pointer',
   position: 'relative',
-  overflow: 'hidden',
+  display: 'flex',
+  flexDirection: 'column',
+  transition: 'all 0.2s ease-in-out',
+  borderRadius: '16px',
+  backgroundColor: theme.palette.background.paper,
   '&:hover': {
-    transform: 'translateY(-2px)',
-    boxShadow: theme.shadows[4],
+    transform: 'translateY(-3px)',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
   },
   [theme.breakpoints.down('sm')]: {
-    padding: theme.spacing(1.5),
+    padding: theme.spacing(2),
+    paddingTop: '30px',
   }
 }));
 
@@ -297,7 +301,8 @@ const TodoList = () => {
 
   const handleStatusChange = async (todoId, newStatus) => {
     try {
-      await axios.patch(`${API_URL}/todos.php`, {
+      await axios.post(`${API_URL}/todos.php`, {
+        action: 'update',
         id: todoId,
         status: newStatus
       });
@@ -793,11 +798,12 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
     try {
       const newStatus = todoToUpdate.status === 'completed' ? 'pending' : 'completed';
       
-      // Send PATCH request with only id and status
-      const response = await axios.patch(`${API_URL}/todos.php`, {
+      // Send POST request instead of PATCH
+      const response = await axios.post(`${API_URL}/todos.php`, {
+        action: 'update',
         id: todoToUpdate.id,
         status: newStatus,
-        remarks: statusRemarks // Optional: Add this if you want to store remarks
+        remarks: statusRemarks
       });
 
       if (response.data.message === "Todo status updated successfully.") {
@@ -1231,7 +1237,7 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
     return (
       <Box sx={{
         p: 3,
-        mt: 8  // Add margin top to create space below navbar
+        mt: 0  // Changed from mt: 8 to mt: 0
       }}>
         <Box sx={{
           display: 'flex',
@@ -1304,7 +1310,7 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
           </Fade>
         ) : (
           <Fade in={true}>
-            <CustomGrid container spacing={2}>
+            <Grid container spacing={{ xs: 2, sm: 2, md: 3 }} sx={{ mt: 1 }}>
               {filteredTodos.map((todo) => (
                 <Grid item xs={12} sm={6} md={4} lg={3} key={todo.id}>
                   <TodoItem 
@@ -1317,21 +1323,36 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
                       size={isMobile ? "small" : "medium"}
                       sx={{
                         position: 'absolute',
-                        right: 8,
-                        top: 8,
-                        fontWeight: 'bold'
+                        right: { xs: 6, sm: 8 },
+                        top: { xs: 6, sm: 8 },
+                        fontWeight: 600,
+                        fontSize: { xs: '0.75rem', sm: '0.8125rem' },
+                        height: { xs: '24px', sm: '32px' },
+                        '& .MuiChip-label': {
+                          px: { xs: 1.5, sm: 2 }
+                        }
                       }}
                     />
 
-                    <Box sx={{ mb: 2, mt: 1 }}>
+                    <Box sx={{ mb: 2, mt: { xs: 0.5, sm: 1 } }}>
                       <Typography 
                         variant={isMobile ? "subtitle1" : "h6"}
                         component="h2"
                         sx={{ 
-                          fontWeight: 'bold',
-                          mb: 1,
-                          pr: 4, // Space for priority badge
-                          wordBreak: 'break-word'
+                          fontWeight: 600,
+                          mb: { xs: 0.75, sm: 1 },
+                          pr: { xs: 3.5, sm: 4 },
+                          fontSize: {
+                            xs: '1rem',
+                            sm: '1.1rem',
+                            md: '1.25rem'
+                          },
+                          lineHeight: 1.3,
+                          wordBreak: 'break-word',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden'
                         }}
                       >
                         {todo.title}
@@ -1344,7 +1365,13 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
                           WebkitLineClamp: 2,
                           WebkitBoxOrient: 'vertical',
                           overflow: 'hidden',
-                          minHeight: '40px'
+                          minHeight: { xs: '32px', sm: '40px' },
+                          fontSize: {
+                            xs: '0.8125rem',
+                            sm: '0.875rem'
+                          },
+                          lineHeight: 1.5,
+                          opacity: 0.8
                         }}
                       >
                         {todo.description}
@@ -1354,26 +1381,62 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
                     <Box 
                       sx={{ 
                         display: 'flex',
-                        gap: 2,
+                        gap: { xs: 1.5, sm: 2 },
                         mb: 2,
                         flexWrap: 'wrap'
                       }}
                     >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: { xs: 0.5, sm: 0.75 },
+                        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+                        px: { xs: 1, sm: 1.5 },
+                        py: { xs: 0.5, sm: 0.75 },
+                        borderRadius: '8px'
+                      }}>
                         <CalendarTodayIcon 
-                          fontSize={isMobile ? "small" : "medium"} 
-                          color="action" 
+                          sx={{
+                            fontSize: { xs: '1rem', sm: '1.25rem' },
+                            color: 'primary.main',
+                            opacity: 0.8
+                          }}
                         />
-                        <Typography variant="body2">
+                        <Typography 
+                          variant="body2"
+                          sx={{
+                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                            color: 'primary.main',
+                            fontWeight: 500
+                          }}
+                        >
                           {moment(todo.due_date).format('DD/MM/YYYY')}
                         </Typography>
                       </Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: { xs: 0.5, sm: 0.75 },
+                        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+                        px: { xs: 1, sm: 1.5 },
+                        py: { xs: 0.5, sm: 0.75 },
+                        borderRadius: '8px'
+                      }}>
                         <AccessTimeIcon 
-                          fontSize={isMobile ? "small" : "medium"} 
-                          color="action" 
+                          sx={{
+                            fontSize: { xs: '1rem', sm: '1.25rem' },
+                            color: 'primary.main',
+                            opacity: 0.8
+                          }}
                         />
-                        <Typography variant="body2">
+                        <Typography 
+                          variant="body2"
+                          sx={{
+                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                            color: 'primary.main',
+                            fontWeight: 500
+                          }}
+                        >
                           {moment(todo.due_date).format('hh:mm A')}
                         </Typography>
                       </Box>
@@ -1382,25 +1445,36 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
                     <Box 
                       sx={{ 
                         mt: 'auto',
-                        pt: 2,
+                        pt: { xs: 1.5, sm: 2 },
                         borderTop: '1px solid',
                         borderColor: 'divider',
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
                         flexWrap: 'wrap',
-                        gap: 1
+                        gap: { xs: 0.75, sm: 1 }
                       }}
                     >
                       <Chip
-                        icon={todo.status === 'completed' ? <CheckCircleIcon /> : <PendingIcon />}
+                        icon={todo.status === 'completed' ? 
+                          <CheckCircleIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} /> : 
+                          <PendingIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />
+                        }
                         label={todo.status}
                         size={isMobile ? "small" : "medium"}
                         color={todo.status === 'completed' ? 'success' : 'default'}
                         variant="outlined"
                         sx={{ 
                           textTransform: 'capitalize',
-                          minWidth: 90
+                          minWidth: { xs: 80, sm: 90 },
+                          height: { xs: '24px', sm: '32px' },
+                          '& .MuiChip-label': {
+                            px: { xs: 1, sm: 1.5 },
+                            fontSize: { xs: '0.75rem', sm: '0.8125rem' }
+                          },
+                          '& .MuiChip-icon': {
+                            ml: { xs: 0.5, sm: 0.75 }
+                          }
                         }}
                       />
                       <Typography 
@@ -1409,17 +1483,19 @@ ${priorityEmoji[todo.priority.toLowerCase()]} Priority: ${todo.priority.charAt(0
                         sx={{ 
                           display: 'flex', 
                           alignItems: 'center',
-                          gap: 0.5
+                          gap: { xs: 0.25, sm: 0.5 },
+                          fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                          opacity: 0.8
                         }}
                       >
-                        <AccessTimeIcon fontSize="inherit" />
+                        <AccessTimeIcon sx={{ fontSize: 'inherit' }} />
                         {moment(todo.created_at).fromNow()}
                       </Typography>
                     </Box>
                   </TodoItem>
                 </Grid>
               ))}
-            </CustomGrid>
+            </Grid>
           </Fade>
         )}
 
