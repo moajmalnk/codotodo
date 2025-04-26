@@ -214,10 +214,10 @@ function App() {
           </div>
           {showInstallBanner && (
             <div style={{
-              position: 'fixed', bottom: 0, left: 0, right: 0, background: '#2563eb', color: 'white', padding: 16, textAlign: 'center', zIndex: 2000
+              position: 'fixed', bottom: 0, left: 0, right: 0, background: '#00A76F', color: 'white', padding: 16, textAlign: 'center', zIndex: 2000
             }}>
               <span>Install CODO Todo for the best experience!</span>
-              <button onClick={handleInstallClick} style={{ marginLeft: 16, padding: '8px 16px', background: 'white', color: '#2563eb', border: 'none', borderRadius: 8, fontWeight: 600 }}>
+              <button onClick={handleInstallClick} style={{ marginLeft: 16, padding: '8px 16px', background: 'white', color: '#00A76F', border: 'none', borderRadius: 8, fontWeight: 600 }}>
                 Install App
               </button>
             </div>
