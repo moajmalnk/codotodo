@@ -728,7 +728,6 @@ const Navbar = ({ todos, onFilterChange }) => {
                 onClick={handlePrivacyToggle}
                 active={isPrivacyMode ? 1 : 0}
                 aria-label="Toggle privacy mode"
-                
               >
                 {isPrivacyMode ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
               </PrivacyButton>
