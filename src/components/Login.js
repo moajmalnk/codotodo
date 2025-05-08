@@ -213,7 +213,7 @@ const Login = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={showOtpField}
                 onKeyPress={handleKeyPress}
-                placeholder="Enter moajmalnk@gmail.com"
+                placeholder="Enter Your Email"
                 type="email"
                 required
                 error={!!email && email !== VALID_EMAIL}

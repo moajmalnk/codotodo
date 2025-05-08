@@ -633,13 +633,20 @@ const Meets = () => {
     {
       name: 'Shihal CK',
       email: 'shihalckmo@gmail.com',
-      role: 'Developer',
-      department: 'Engineering',
+      role: 'Designer',
+      department: 'Design',
       color: purple[500]
     },
     {
       name: 'Ajmal P',
       email: 'info.ajmalp@gmail.com',
+      role: 'Developer',
+      department: 'Engineering',
+      color: orange[500]
+    },
+    {
+      name: 'Rahoof',
+      email: 'rahoof@gmail.com',
       role: 'Developer',
       department: 'Engineering',
       color: orange[500]
