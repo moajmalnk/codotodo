@@ -120,8 +120,8 @@ const ProtectedRoute = ({ children }) => {
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
 
   const isMobile = useMediaQuery('(max-width:600px)');
 
@@ -151,32 +151,36 @@ function App() {
   }, []);
 
   useEffect(() => {
-    window.addEventListener('beforeinstallprompt', (e) => {
+    const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
       setShowInstallBanner(true);
-    });
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    // Set a timeout to hide the banner after 10 seconds
+    const timer = setTimeout(() => {
+      setShowInstallBanner(false);
+    }, 10000);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      clearTimeout(timer);
+    };
   }, []);
 
-  // Auto-close install banner after 10 seconds
-  useEffect(() => {
-    if (showInstallBanner) {
-      const timer = setTimeout(() => {
-        setShowInstallBanner(false);
-      }, 10000);
-      return () => clearTimeout(timer);
-    }
-  }, [showInstallBanner]);
-
-  const handleInstallClick = () => {
+  const handleInstallClick = async () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();
-      deferredPrompt.userChoice.then((choiceResult) => {
-        if (choiceResult.outcome === 'accepted') {
-          // User accepted the install
-        }
-        setShowInstallBanner(false);
-      });
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        console.log('User accepted the install prompt');
+      } else {
+        console.log('User dismissed the install prompt');
+      }
+      setDeferredPrompt(null);
+      setShowInstallBanner(false);
     }
   };
 
