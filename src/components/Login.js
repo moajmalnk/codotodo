@@ -79,6 +79,12 @@ const Login = () => {
   const VALID_EMAIL = 'moajmalnk@gmail.com';
   const VALID_OTP = '995559';
 
+  const revokeActiveSessions = () => {
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('userEmail');
+    window.dispatchEvent(new Event('logoutStateChange'));
+  };
+
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -169,7 +175,7 @@ const Login = () => {
         showNotification('Login successful!', 'success');
         navigate('/todos', { replace: true });
       } else {
-        showNotification('Invalid OTP. Please enter valied OTP', 'error');
+        showNotification('Invalid OTP. Please enter valid OTP', 'error');
       }
     } catch (error) {
       showNotification('Error during login', 'error');
@@ -259,7 +265,7 @@ const Login = () => {
                   placeholder="Enter OTP"
                   required
                   error={Boolean(otp && otp !== VALID_OTP)}
-                  helperText={!!otp && otp !== VALID_OTP ? 'Please enter valied OTP' : ''}
+                  helperText={!!otp && otp !== VALID_OTP ? 'Please enter valid OTP' : ''}
                   inputProps={{ 
                     maxLength: 6,
                     pattern: '[0-9]*'
